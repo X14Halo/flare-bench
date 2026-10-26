@@ -2574,8 +2574,8 @@ function mkLight(type, x, y, op){ const T = LIGHT_TYPES[type];
   return { id: ++lid, type, x, y, ev: 0, kelvin: T.kelvin || 3000, sizeMul: 1, occl: T.occl, ballast: 'electronic', op: op || 'sweep', dist: T.dref || Infinity,
     angle: T.rotDef || 0, color: T.color, aim: T.aim ?? 0, dir: T.dir ?? -90, jit: jitter() }; }
 const state = {
-  lens: 'anaClassic', camera: 'digital', filter: 'none', t: 2.8, ev: 0, matte: false, dirt: 0.45,
-  motion: reduceMotion ? 'locked' : 'handheld', scene: 'black', wind: reduceMotion ? 0 : 0.6, mode: 'traced', quality: 64,
+  lens: 'modern', camera: 'digital', filter: 'none', t: 2.8, ev: 0, matte: false, dirt: 0.45,
+  motion: 'locked', scene: 'black', wind: reduceMotion ? 0 : 0.6, mode: 'traced', quality: 64,
   fps: 24, shutter: 180, mains: 60,
   focus: Infinity, autoFocus: true, iris: 'lens', smear: 'wipe', leak: 'off', haze: 0, showSet: true, showSrc: true,
   plateEV: 0, pan: 0, tilt: 0, focal: null, compare: false, split: 0.5,
@@ -3809,7 +3809,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 32;
+const APP_VERSION = 33;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
