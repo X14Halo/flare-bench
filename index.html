@@ -345,7 +345,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Sources with real size and distance</dt><dd>Lights are extended sources, not points. The sun covers its true half a degree, so the focal length sets exactly how big it is in frame. Several samples across each source soften every ghost by the source's size times that ghost's magnification, which is why sun ghosts look soft. A light at a finite distance sends diverging rays rather than parallel ones, which shifts and refocuses its ghosts. Brightness is set in stops above exposure from real-world luminances: the sun is about 11 stops over a daylight exposure, a candle a couple.</dd>
         <dt>Focus and depth of field</dt><dd>Focusing moves the lens away from the sensor as a real focus mechanism does, so ghosts drift and change size as you rack focus ("flare breathing"). Out-of-focus sources get the thin-lens blur circle, (<i>f</i>²/<i>N</i>)·|1/<i>D</i> − 1/<i>F</i>|/2, squeezed horizontally on anamorphics.</dd>
         <dt>Manufacturing imperfections</dt><dd>Every element is given a small decentre, tilt and polishing error, so its ghosts never line up perfectly through the centre of frame.</dd>
-        <dt>Starburst from diffraction</dt><dd>The star is Fraunhofer diffraction from the iris. Each straight blade edge throws a spike at right angles to itself, so an even number of blades gives that many spikes and an odd number twice as many. The spikes are as wide as wavelength × f-number and fade as 1/<i>r</i>², and curved blades instead give a round halo that fades as 1/<i>r</i>³. That's why stopping down grows the star, and why it is slightly wider in red.</dd>
+        <dt>Starburst from diffraction</dt><dd>The star is Fraunhofer diffraction from the iris. Each straight blade edge throws a spike at right angles to itself, so an even number of blades gives that many spikes and an odd number twice as many. The spikes are as wide as wavelength × f-number and fade as 1/<i>r</i>², and curved blades instead give a round halo that fades as 1/<i>r</i>³. That's why stopping down grows the star, and why it is slightly wider in red. The star keeps the same orientation wherever the light is, because the iris doesn't turn. Near the frame edges the lens rims crop the opening into a cat's eye: their curved edges throw no spikes, so the rays pointing toward the frame centre fade there.</dd>
         <dt>Glare and veiling haze</dt><dd>Micro-roughness on the glass and haze inside the lens scatter a small fraction of the light into a glare spread function, normalised so no energy is created. It is strong right beside the source and falls off slowly, about as 1/<i>r</i><sup>2.6</sup>, so a source as bright as the sun lifts the blacks and blooms a wide soft mass around itself, as real sun shots do. Each ghost also gets a soft halo scattered by its own coatings.</dd>
         <dt>Converging like a path tracer</dt><dd>While the shot holds still, each new frame traces a fresh, rotated set of rays, source samples and wavelengths and averages it in. This is Monte Carlo accumulation, so a locked-off frame keeps refining toward a smooth result.</dd>
         <dt>Linear light throughout</dt><dd>Everything is computed in scene-referred linear light, in 16-bit floating-point buffers. The flare is added to the image the way a lens adds it, before the camera's response curve. Flare gain scales what the lens does with a light, not the light itself, as in Animal Logic's flare pass.</dd>
@@ -2282,7 +2282,7 @@ void main(){
 const FS_PDIFF = `#version 300 es
 precision highp float; precision highp int;
 in vec2 vD; in vec2 vC; in float vY; flat in float vVis; out vec4 o;
-uniform vec3 uE, uSE; uniform float uN, uBl, uSpikes, uRot, uStraight, uHalfH, uPxMM, uS, uSqx, uSeed, uStarK, uStarSoft; uniform int uLi;
+uniform vec3 uE, uSE, uCat; uniform float uN, uBl, uSpikes, uRot, uStraight, uHalfH, uPxMM, uS, uSqx, uSeed, uStarK, uStarSoft; uniform int uLi;
 ${NOISE}${FLICK}${SHAPE}
 void main(){
   if (vVis <= 1e-4) discard;
@@ -2292,15 +2292,22 @@ void main(){
   float seg = 6.28318531/uSpikes;
   float aa = a - uRot; float id = floor(aa/seg + 0.5); float da = aa - id*seg;
   float arm = 0.45 + 1.1*pow(h11(mod(id, uSpikes) + uSeed), 1.5);   // real blades are never even: some rays far stronger
+  // off axis the lens rims vignette the pupil into a cat's eye, narrow along the line to the frame centre. The rims are
+  // curved, so the blade edges they cover stop throwing spikes: rays pointing along that line fade, the others stay,
+  // and the narrower pupil spreads the round part of the pattern along it (uCat: direction to the light, amount)
+  float clip = clamp(uCat.z*3.0, 0.0, 0.85);
+  arm *= 1.0 - clip*pow(abs(cos(id*seg + uRot - atan(uCat.y, uCat.x))), 3.0);
   float pmm = abs(sin(da))*xmm;
   float smm = uS*uHalfH;
   float x = sqrt(xmm*xmm + smm*smm*0.3);
+  vec2 dr = vec2(dot(d, uCat.xy), dot(d, vec2(-uCat.y, uCat.x)))*vec2(1.0/(1.0 + 2.0*uCat.z), 1.0);
+  float xr = length(dr)*uHalfH, xi = sqrt(xr*xr + smm*smm*0.3);
   float mult = mod(uBl, 2.0) < 0.5 ? 2.0 : 1.0;
   vec3 lam = vec3(0.62e-3, 0.55e-3, 0.46e-3);
   vec3 col;
   for (int c = 0; c < 3; c++){
     float l = lam[c];
-    float iso = 2.0*l*uN/(97.409*x*x*x);
+    float iso = 2.0*l*uN/(97.409*xi*xi*xi)/(1.0 + 2.0*uCat.z);
     // uStarSoft: rounded, slightly irregular blades and spherical aberration smear each ray sideways (Cooke, K35)
     float sig = max(uPxMM*1.0, l*uN)*(1.0 + uStarSoft*(2.5 + 0.06*xmm));
     float rho = mult*l*uN/(9.8696*uBl*x*x);
@@ -2308,7 +2315,7 @@ void main(){
     col[c] = iso*(1.0 - uStraight*0.85) + spk*uStraight;
   }
   float win = 1.0 - smoothstep(0.6, 1.0, length(vC));
-  o = vec4(col*uHalfH*uHalfH*uE*vVis*win*flick(uLi, vY), 1.0);
+  o = vec4(col*(1.0 - 0.5*uCat.z)*uHalfH*uHalfH*uE*vVis*win*flick(uLi, vY), 1.0);
 }`;
 
 function compile(type, src){
@@ -3293,6 +3300,7 @@ function render(t){
       const sU = d.kind ? Math.max(0.005, 0.3*Math.min(d.ex, d.ey)) : d.size, fs = d.kind ? Math.min(1, Math.PI*sU*sU/d.area) : 1;
       const k = 2*Math.PI*K_TRACE*d.flux*d.kT*(0.4 + 0.6*defK)*fs*MS*MX.star;
       gl.uniform2f(s.u.uL, d.sx, d.sy); gl.uniform1f(s.u.uExt, ext); gl.uniform3f(s.u.uSE, d.ex, d.ey, d.ang);
+      { const lr = Math.hypot(d.sx, d.sy) || 1; gl.uniform3f(s.u.uCat, d.sx/lr, d.sy/lr, Math.min(d.cat, 0.6)); }
       gl.uniform3f(s.u.uE, d.col[0]*k, d.col[1]*k, d.col[2]*k);
       gl.uniform1i(s.u.uLi, i); gl.uniform1f(s.u.uAtten, d.atten); gl.uniform1f(s.u.uS, d.kind ? Math.max(0.005, 0.3*Math.min(d.ex, d.ey)) : d.size); gl.uniform1f(s.u.uSeed, (state.lights[i].id*7.31) % 50);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -3809,7 +3817,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 33;
+const APP_VERSION = 34;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
