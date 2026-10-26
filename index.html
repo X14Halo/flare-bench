@@ -41,8 +41,12 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14
 .frame{position:absolute;left:0;top:0}
 .empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 32px));text-align:center;cursor:default;z-index:3}
 .empty[hidden]{display:none}
+[hidden]{display:none!important}
 .empty-t{margin:0 0 14px;font-size:15px;color:var(--fg)}
 .empty-s{margin:14px 0 0;font-size:12px;color:var(--muted)}
+.how-h{font-family:var(--f-display);font-weight:500;font-size:13.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:26px 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+.how-intro{color:var(--muted);font-size:12.5px;margin:6px 0 0;max-width:60ch}
+details.read dd i{font-style:italic}
 .empty-g{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .empty-g button{background:rgba(20,21,24,.85);border:1px solid var(--line);color:var(--fg);border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
 .empty-g button:hover{border-color:var(--accent)}
@@ -194,7 +198,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <div class="empty" id="empty">
         <p class="empty-t">Add a light to see how this lens flares</p>
         <div class="empty-g" id="quickAdd"></div>
-        <p class="empty-s">Or load a plate and let its bright areas flare on their own.</p>
+        <p class="empty-s" hidden>Or load a plate and let its bright areas flare on their own.</p>
       </div>
       <div class="hint" id="hint">Drag a light · click to move the selected one · <kbd>H</kbd> hides handles</div>
       <p class="gl-error" id="glError" hidden></p>
@@ -214,13 +218,14 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
     <header class="brand">
       <h1>Flare Bench</h1>
       <p>Physically based lens flares from the lens, the camera and the lights you tag.</p>
-      <div class="add top"><button type="button" class="btn" id="importBtn">Import camera &amp; lights…</button><button type="button" class="btn" id="presentBtn" title="Hide the panel (P)">Present</button></div>
+      <div class="add top"><button type="button" class="btn" id="importBtn" hidden>Import camera &amp; lights…</button><button type="button" class="btn" id="presentBtn" title="Hide the panel (P)">Present</button></div>
       <input type="file" id="importFile" accept=".json,application/json" hidden>
       <p class="sub" id="importMsg" role="status"></p>
     </header>
 
     <section class="group">
       <h2>Shot</h2>
+      <div id="plateUI" hidden>
       <div class="add"><button type="button" class="btn" id="loadPlate">Load plate…</button><button type="button" class="btn" id="clearPlate">Black</button><input type="file" id="plateFile" accept=".exr,.hdr,image/*" hidden></div>
       <p class="sub" id="plateInfo">Black. Load an EXR or HDR render or photo to light it with its real highlights.</p>
       <div id="plateCtl" hidden>
@@ -230,6 +235,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
           <div class="row"><label for="tilt">Tilt</label><input type="range" id="tilt" min="-70" max="70" step="1" value="0"><output id="tiltOut" for="tilt">0°</output></div>
         </div>
         <label class="switch"><span>Show the plate<small>Off: the flare alone over black, ready to comp</small></span><input type="checkbox" id="showSet" checked></label>
+      </div>
       </div>
       <div class="field"><span id="motLbl">Camera motion</span><div class="seg" role="radiogroup" aria-labelledby="motLbl" id="motSeg"></div></div>
       <label class="switch"><span>Before / after<small>Drag the line in the frame</small></span><input type="checkbox" id="compare"></label>
@@ -259,7 +265,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <div class="row"><label for="haze">Haze glow</label><input type="range" id="haze" min="0" max="1" step="0.01"><output id="hazeOut" for="haze"></output></div>
     </section>
 
-    <section class="group">
+    <section class="group" id="screenUI" hidden>
       <h2>Screen flares</h2>
       <label class="switch"><span>Flare the bright parts of the plate<small>Glints, fire, screens, magic: anything bright enough</small></span><input type="checkbox" id="scrOn" checked></label>
       <div class="row"><label for="scrThr">Threshold</label><input type="range" id="scrThr" min="0" max="12" step="0.25" value="3"><output id="scrThrOut" for="scrThr"></output></div>
@@ -311,10 +317,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
     <details class="read">
       <summary>How it works</summary>
       <dl>
-        <dt>Three kinds of flare source</dt><dd><b>Flare lights</b> are the few lights an artist tags: the sun, a practical, a stage spot. They flare from their real position, size, colour, brightness and beam direction, and each has its own flare gain, so a light can flare more or less without relighting the shot. <b>Screen flares</b> come from the plate itself: any pixel bright enough flares in proportion to how bright it is, with ghosts shaped like it, so chrome glints, fire, monitors and magic need no locators. <b>Off-frame lights</b> sit just past the frame edge, where they pour glare and barrel reflections in from that side, as on set.</dd>
-        <dt>Nothing flares twice</dt><dd>A tagged light is held out of the screen flares where it sits, so the plate's bright pixels and the light's own flare never stack. In a pipeline the cleaner version is a light-group AOV: the tagged lights render to their own layer and are subtracted from the image the screen flares read.</dd>
-        <dt>Why a linear plate matters</dt><dd>How hard something flares depends on how far above white it really is. An EXR or HDR render or photo keeps that: the sun stays tens of thousands of times brighter than the sky, a candle only a few times. An 8-bit JPG clips all of it to the same white, so its flares are a guess.</dd>
-        <dt>Camera data</dt><dd>Import camera &amp; lights reads a small JSON file a DCC script can write: focal length, f-stop and focus distance from the shot camera, and the tagged lights with their image positions. The lens model then stops down, focuses and frames exactly like the shot.</dd>
+        <dt>Flare lights</dt><dd>Only the lights an artist tags flare: the sun, a practical, a stage spot. Each flares from its real position, size, colour, brightness and beam direction, and has its own flare gain, so a light can flare more or less without relighting the shot. Lights just past the frame edge still flare, pouring glare and barrel reflections in from that side, as on set.</dd>
         <dt>Flare model</dt><dd>Ray-traced follows thousands of rays per ghost through each lens's surfaces, glass, anti-reflection coatings and iris, across the spectrum (Hullin et al., SIGGRAPH 2011), plus diffraction for the starburst and a scatter model for glare. Hybrid traces the ghosts and streak and hand-shapes the rest. Artistic is fully hand-shaped and fastest. The lens designs are real optical types matched to each lens family, not the makers' private prescriptions.</dd>
         <dt>Choosing a lens</dt><dd>The lenses are grouped by look, each tuned against real frames shot on the lenses named under it. Clean and large-format modern glass barely flares. Warm character lenses glow. Vintage glass throws bold coloured rings. Classic anamorphics give the thin blue streak and tall oval ghosts; modern anamorphics a paler streak and sideways pills. Cinema zooms sit close to modern primes.</dd>
         <dt>Light sources</dt><dd>Each source type is calibrated by how far above the exposure it really sits and by its real spectrum. The sun, an HMI or a headlight aimed at the lens is many stops over and flares hard; candles, torches and shaded lamps glow but hardly ghost; sodium lamps barely streak through blue-coated anamorphic glass; tubes and panels never streak.</dd>
@@ -322,6 +325,27 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Flare lights on set</dt><dd>Cinematographers often make the flare on purpose with a light just out of shot aimed at the lens: a xenon torch panned on and off the lens (the Star Trek method), a small spot trimmed in from the frame edge, a mirror bouncing the sun. The Flare lights group places them where a crew would.</dd>
         <dt>Starburst, streak, dirt</dt><dd>The starburst is diffraction off the iris blades. The anamorphic streak comes from reflections inside the cylindrical front group. Dust on the front glass shows as soft iris-shaped blobs; wipe marks and fingerprints throw streaky fans.</dd>
         <dt>Flicker</dt><dd>HMIs on magnetic ballasts, sodium lamps and cheap LEDs pulse at twice the mains frequency (or their PWM rate); off-speed frame rates and shutters make them beat, and the rolling shutter turns that into bands.</dd>
+      </dl>
+      <h3 class="how-h">Under the hood</h3>
+      <p class="how-intro">None of the ghosts, rings or streaks in the traced modes are drawn shapes. They are what comes out the back of a simulated lens when light is sent through it. This is how.</p>
+      <dl>
+        <dt>A lens, as an optical prescription</dt><dd>Each lens family is a real optical design written the way a lens designer writes one: a table of surfaces, each with its radius of curvature, the spacing to the next, the glass's refractive index and Abbe number (its dispersion), its clear diameter, and where the iris sits. The spherical primes are built around a double-Gauss core. The anamorphics add a cylindrical front group, solved numerically to be afocal in one axis so it squeezes only horizontally. Digital bodies add the IR-cut filter, cover glass and sensor behind the lens, because they reflect light too. The designs represent each lens type; they are not the makers' private prescriptions.</dd>
+        <dt>Paraxial optics</dt><dd>From that table the tool works out the focal length, back focus and entrance pupil: where the iris appears from the front, and how big. Anamorphics get this separately for each axis. Rays are aimed through that pupil, so stopping down really does shrink the bundle of light that gets in.</dd>
+        <dt>Where ghosts come from</dt><dd>A ghost is light that reflects twice inside the lens before it reaches the sensor: backwards off one surface, then forwards again off an earlier one. A lens with <i>N</i> surfaces has <i>N</i>(<i>N</i>−1)/2 such paths, so a 20-surface lens has 190. Each path is test-traced at several positions across the frame and ranked by how concentrated its light is, and the strongest 48 to 128 (set by Ray density) are kept. Paths with four or more reflections are dropped: each extra pair of reflections makes the light another 10,000 times or more dimmer.</dd>
+        <dt>Real ray tracing, on the graphics card</dt><dd>For every ghost path, a grid of up to 128×128 rays is spread evenly across the pupil (using an equal-area square-to-disc mapping) and traced through every surface. Each surface gets an exact ray–sphere or ray–cylinder intersection and Snell's law refraction, with mirror reflection at the path's two ghost surfaces. Rays that miss a surface, strike outside an element's rim, or totally internally reflect are lost, as they would be in real glass. Each ray is one pixel of a shader, so at the higher settings millions of rays are traced for every frame.</dd>
+        <dt>Coatings and Fresnel reflection</dt><dd>At every surface, the fraction reflected is computed for each wavelength and angle. Bare glass and single- and two-layer coatings use the thin-film characteristic-matrix method, averaged over both polarisations. Modern broadband multicoats follow curves shaped like published reflectance data, including the faint residual colour (green, amber, violet) that tints each maker's ghosts. A ghost's brightness and colour are the product of its two reflecting surfaces and the transmission through every other surface on its path.</dd>
+        <dt>Spectral, not RGB</dt><dd>Six wavelengths from 420 to 660 nm are traced separately, with each glass's index changing with wavelength (from its Abbe number), so ghosts fringe and rainbow the way real dispersion makes them. Every source has an emission spectrum: a blackbody for the sun and tungsten, line spectra for sodium and discharge lamps, narrow bands for LEDs. Each traced wavelength is turned into colour with the CIE 1931 colour-matching functions, and sub-bands interpolated between neighbouring wavelengths keep rainbow edges continuous.</dd>
+        <dt>From rays to an image</dt><dd>Each ghost's traced grid is drawn as a mesh of triangles. Brightness at any point is the light carried by the pupil cells around a ray divided by the area they land on. Where the mesh is squeezed, the ghost gets brighter, so the bright caustic rims, line ghosts and pinched shapes come straight out of the optics, as in Hullin et al. (SIGGRAPH 2011). The iris is applied per pixel from each ray's distance to the blade polygon, so every ghost carries the real iris shape, blade count and rotation.</dd>
+        <dt>Clipped ghosts and off-frame light</dt><dd>Rays that pass outside an element's clear diameter are stopped. This is mechanical vignetting: near the frame edge it cuts ghosts into crescents and cat's eyes, and it lets a light outside the frame still throw ghosts into it. Both happen with real glass.</dd>
+        <dt>Sources with real size and distance</dt><dd>Lights are extended sources, not points. The sun covers its true half a degree, so the focal length sets exactly how big it is in frame. Several samples across each source soften every ghost by the source's size times that ghost's magnification, which is why sun ghosts look soft. A light at a finite distance sends diverging rays rather than parallel ones, which shifts and refocuses its ghosts. Brightness is set in stops above exposure from real-world luminances: the sun is about 11 stops over a daylight exposure, a candle a couple.</dd>
+        <dt>Focus and depth of field</dt><dd>Focusing moves the lens away from the sensor as a real focus mechanism does, so ghosts drift and change size as you rack focus ("flare breathing"). Out-of-focus sources get the thin-lens blur circle, (<i>f</i>²/<i>N</i>)·|1/<i>D</i> − 1/<i>F</i>|/2, squeezed horizontally on anamorphics.</dd>
+        <dt>Manufacturing imperfections</dt><dd>Every element is given a small decentre, tilt and polishing error, so its ghosts never line up perfectly through the centre of frame.</dd>
+        <dt>Starburst from diffraction</dt><dd>The star is Fraunhofer diffraction from the iris. Each straight blade edge throws a spike at right angles to itself, so an even number of blades gives that many spikes and an odd number twice as many. The spikes are as wide as wavelength × f-number and fade as 1/<i>r</i>², and curved blades instead give a round halo that fades as 1/<i>r</i>³. That's why stopping down grows the star, and why it is slightly wider in red.</dd>
+        <dt>Glare and veiling haze</dt><dd>Micro-roughness on the glass and haze inside the lens scatter a small fraction of the light into a glare spread function, normalised so no energy is created. It is strong right beside the source and falls off slowly, about as 1/<i>r</i><sup>2.6</sup>, so a source as bright as the sun lifts the blacks and blooms a wide soft mass around itself, as real sun shots do. Each ghost also gets a soft halo scattered by its own coatings.</dd>
+        <dt>Converging like a path tracer</dt><dd>While the shot holds still, each new frame traces a fresh, rotated set of rays, source samples and wavelengths and averages it in. This is Monte Carlo accumulation, so a locked-off frame keeps refining toward a smooth result.</dd>
+        <dt>Linear light throughout</dt><dd>Everything is computed in scene-referred linear light, in 16-bit floating-point buffers. The flare is added to the image the way a lens adds it, before the camera's response curve. Flare gain scales what the lens does with a light, not the light itself, as in Animal Logic's flare pass.</dd>
+        <dt>What is tuned rather than derived</dt><dd>Some parts are modelled by hand: the Artistic flare model and the extra rainbow elements, dust and smears on the front glass, light leaks, and the relative strength of glare and streak for each lens family. Those were matched by eye against real footage shot on the lenses each family is named after. In the Ray-traced model, the ghosts themselves come only from the optics.</dd>
+        <dt>Further reading</dt><dd>Hullin, Eisemann, Seidel and Lee, <i>Physically-Based Real-Time Lens Flare Rendering</i>, SIGGRAPH 2011. Ritschel, Ihrke, Frisvad, Coppens, Myszkowski and Seidel, <i>Temporal Glare</i>, Eurographics 2009. Animal Logic, <i>Physical Based Lens Flare Rendering in The LEGO Movie 2</i>, DigiPro 2019. Shirley and Chiu, <i>A Low Distortion Map Between Disk and Square</i>, 1997. Wyman, Sloan and Shirley, <i>Simple Analytic Approximations to the CIE XYZ Color Matching Functions</i>, 2013.</dd>
       </dl>
     </details>
   </aside>
@@ -3658,8 +3682,11 @@ async function loadPlateFile(f){
 $('#loadPlate').addEventListener('click', () => $('#plateFile').click());
 $('#plateFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadPlateFile(f); e.target.value = ''; });
 $('#clearPlate').addEventListener('click', () => { state.scene = 'black'; syncShotUI(); });
+/* plates, screen flares and camera import are built but switched off in the panel for now */
+const FEATURE_PLATES = false;
+if (FEATURE_PLATES){ $('#plateUI').hidden = false; $('#screenUI').hidden = false; $('#importBtn').hidden = false; document.querySelector('.empty-s').hidden = false; }
 viewport.addEventListener('dragover', e => { e.preventDefault(); });
-viewport.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (!f) return; if (/\.json$/i.test(f.name)) importFile(f); else loadPlateFile(f); });
+viewport.addEventListener('drop', e => { e.preventDefault(); if (!FEATURE_PLATES) return; const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (!f) return; if (/\.json$/i.test(f.name)) importFile(f); else loadPlateFile(f); });
 $('#plateEV').addEventListener('input', e => { state.plateEV = +e.target.value; $('#plateEVOut').textContent = fmtEV(state.plateEV); });
 $('#pan').addEventListener('input', e => { state.pan = +e.target.value; $('#panOut').textContent = state.pan + '°'; });
 $('#tilt').addEventListener('input', e => { state.tilt = +e.target.value; $('#tiltOut').textContent = state.tilt + '°'; });
@@ -3757,7 +3784,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 30;
+const APP_VERSION = 31;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
