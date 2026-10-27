@@ -24,6 +24,20 @@ realistic by default, quick to direct, and driven by real shot data rather than 
 The panel's **How it works → Under the hood** section explains the optics in detail: the lens prescriptions, ghost
 paths, GPU ray tracing, coatings, spectral rendering, diffraction and glare.
 
+## Toward a Nuke tool
+
+The idea is that a lighter's only step is to tag a light, and everything else follows from the shot itself:
+
+1. **Tag the light in Houdini.** Lights get a *Flare* switch and an optional flare gain in stops on the studio's
+   light asset. The sun is tagged by default.
+2. **The render carries the data.** At render time the pipeline writes the shot camera (focal length, filmback,
+   f-stop, focus distance, lens package) and every tagged light's per-frame position, distance, colour, intensity, size
+   and visibility into the EXR metadata. No locators to export or keep in sync, so re-renders and camera changes update
+   the flare on their own. Large shaped lights can also get their own light-group pass for their real shape.
+3. **One node in comp.** A Flare node on the beauty reads that metadata, takes the lens from the show's camera package,
+   holds tagged lights out of the screen flares so nothing flares twice, and outputs the flare as its own layers. The
+   compositor only adjusts taste: overall amount, per-light gain, the element mix.
+
 ## In progress
 
 The page also has screen flares from HDR/EXR plates and a camera-and-lights import from 3D, but both are switched off in

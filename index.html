@@ -343,6 +343,14 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Flicker</dt><dd>Sodium streetlights and bulbs on mains power pulse at twice the mains frequency, and LED headlights at their PWM rate; off-speed frame rates and shutters make them beat, and the rolling shutter turns that into bands.</dd>
         <dt>Using it in comp</dt><dd>The flare is meant to go over a render, where the light itself already exists. Turn off <b>Sources</b> under the frame to see the flare alone: the ghosts, star, streak and the glow the lens adds around the light, without the sun's disc or the bulb. <b>Handles</b> hides the light markers for a clean view, and Present (<kbd>P</kbd>) hides the panel.</dd>
       </dl>
+      <h3 class="how-h">From prototype to a Nuke tool</h3>
+      <p class="how-intro">Flare Bench is the look and the behaviour. In production the same model would run as a Nuke node fed by the shot itself, so nobody places a flare by hand. The goal is one artist step: tag the light.</p>
+      <dl>
+        <dt>1. Tag the light in Houdini</dt><dd>Lights get a <b>Flare</b> switch (a parameter on the studio's light asset) and an optional <b>flare gain</b> in stops. The sun is tagged by default; fill and cheat lights never are. That is the only thing a lighter has to do.</dd>
+        <dt>2. The render carries everything</dt><dd>At render time the pipeline writes the shot camera (focal length, filmback, f-stop, focus distance, lens package) and, for every tagged light on every frame, its position in frame, distance, colour, intensity, size and how visible it is (a few rays toward each light, so the sun going behind a tree dims its flare) into the EXR's metadata. There are no locators to export or keep in sync: the data travels with the frames, so a re-render or a camera change updates the flare automatically. Big shaped lights can also get their own light-group pass, which the node reads as the light's real shape at whatever angle it is seen.</dd>
+        <dt>3. One node in comp</dt><dd>A single Flare node goes on the beauty. It reads the camera and the tagged lights from the metadata, sets the lens from the show's camera package, holds the tagged lights out of the screen flares so nothing flares twice, and outputs the flare as its own layers. The compositor only touches taste: the overall amount, a light's gain, the elements mix.</dd>
+        <dt>Why this way</dt><dd>It needs no new habits. Lighters already tag light groups and comp already reads EXR metadata, so the flare follows the real camera and lights with no hand-matching, and it stays right through every revision. A starting-point Houdini export for this prototype, which writes the camera and tagged lights to a file, is in the project's GitHub repository.</dd>
+      </dl>
       <h3 class="how-h">Under the hood</h3>
       <p class="how-intro">None of the ghosts, rings or streaks in the traced modes are drawn shapes. They are what comes out the back of a simulated lens when light is sent through it. This is how.</p>
       <dl>
@@ -3886,7 +3894,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 40;
+const APP_VERSION = 41;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
