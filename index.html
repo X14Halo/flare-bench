@@ -1823,7 +1823,8 @@ void main(){
   col /= float(nb);
   float ls = dot(texture(uScene, uv).rgb, lw);
   // the blurred highlight it bleeds from, read smoothly (a single bilinear tap of the coarse level shows as a square)
-  vec2 fo = 4.0/uRes;
+  // a fixed fraction of the frame height (as on the sensor), not a fixed number of screen pixels
+  vec2 fo = vec2(max(1.5, 0.0035*uRes.y))/uRes;
   float lb = 0.25*dot(texture(uFr, uv + vec2(fo.x, fo.y)).rgb + texture(uFr, uv + vec2(-fo.x, fo.y)).rgb + texture(uFr, uv + vec2(fo.x, -fo.y)).rgb + texture(uFr, uv - fo).rgb, lw);
   float fr = clamp(log2((lb + 0.02)/(ls + 0.02)) - 0.5, 0.0, 3.0)*clamp((lb - 0.5)*0.5, 0.0, 1.0);
   float after = vUV.x < uSplit ? 0.0 : 1.0;
@@ -3817,7 +3818,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 34;
+const APP_VERSION = 35;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
