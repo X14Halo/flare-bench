@@ -9,8 +9,10 @@ realistic by default, quick to direct, and driven by real shot data rather than 
 
 ## What it does
 
-- **Tagged flare lights.** Add lights by type (sun, HMI, tungsten, practicals, flame, LED, sodium and more). Each one
-  flares according to its real brightness, size and colour, with a per-light flare gain in stops for art direction.
+- **Tagged flare lights.** A short list of the lights that turn up in an animated feature and really flare: sun, car
+  headlight, streetlight, stage spotlight, bare bulb and flashlight, plus a torch, a small spot or a mirror bounce aimed
+  into the lens from just off frame. Each one flares according to its real brightness, size and colour, with a
+  per-light flare gain in stops for art direction.
 - **Real lens behaviour.** Pick a lens family (clean modern, large-format, warm character, vintage, classic and modern
   anamorphic, zoom). Ghosts are ray traced through a lens model, and the star comes from the iris shape. Veiling glare,
   streaks and haze all react to the T-stop, focal length, focus and light position.

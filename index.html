@@ -336,7 +336,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Flare lights</dt><dd>Only the lights an artist tags flare: the sun, a practical, a stage spot. Each flares from its real position, size, colour, brightness and beam direction, and has its own flare gain, so a light can flare more or less without relighting the shot. Lights just past the frame edge still flare, pouring glare and barrel reflections in from that side, as on set.</dd>
         <dt>Flare model</dt><dd>Ray-traced follows thousands of rays per ghost through each lens's surfaces, glass, anti-reflection coatings and iris, across the spectrum (Hullin et al., SIGGRAPH 2011), plus diffraction for the starburst and a scatter model for glare. Hybrid traces the ghosts and streak and hand-shapes the rest. Artistic is fully hand-shaped and fastest. The lens designs are real optical types matched to each lens family, not the makers' private prescriptions.</dd>
         <dt>Choosing a lens</dt><dd>The lenses are grouped by look, each tuned against real frames shot on the lenses named under it. Clean and large-format modern glass barely flares. Warm character lenses glow. Vintage glass throws bold coloured rings. Classic anamorphics give the thin blue streak and tall oval ghosts; modern anamorphics a paler streak and sideways pills. Cinema zooms sit close to modern primes.</dd>
-        <dt>Light sources</dt><dd>Each source type is calibrated by how far above the exposure it really sits and by its real spectrum. The sun, an HMI or a headlight aimed at the lens is many stops over and flares hard; candles, torches and shaded lamps glow but hardly ghost; sodium lamps barely streak through blue-coated anamorphic glass; tubes and panels never streak.</dd>
+        <dt>Light sources</dt><dd>The list is kept to the lights that turn up in an animated feature and really flare: the sun, headlights, streetlights, stage spotlights, bare bulbs and flashlights, plus the three classic ways a crew aims a light into the lens from just off frame. Each is calibrated by how far above the exposure it really sits and by its real spectrum: the sun or a headlight aimed at the lens is many stops over and flares hard, and sodium streetlights barely streak through blue-coated anamorphic glass. Large soft sources, fire, neon and screens are left out on purpose: they glow rather than flare, which a glow or convolution in comp handles better.</dd>
         <dt>Ghosts and their cut edges</dt><dd>Ghosts are images of the lens opening, lined up through the frame centre opposite the light. Near the frame edge the glass rims clip them into crescents and cat's eyes, which change as the camera moves; stopping down shrinks the clipping.</dd>
         <dt>Flare lights on set</dt><dd>Cinematographers often make the flare on purpose with a light just out of shot aimed at the lens: a xenon torch panned on and off the lens (the Star Trek method), a small spot trimmed in from the frame edge, a mirror bouncing the sun. The Flare lights group places them where a crew would.</dd>
         <dt>Starburst, streak, dirt</dt><dd>The starburst is diffraction off the iris blades. The anamorphic streak comes from reflections inside the cylindrical front group. Dust on the front glass shows as soft iris-shaped blobs; wipe marks and fingerprints throw streaky fans.</dd>
@@ -3457,8 +3457,8 @@ function syncHandles(){
   state.lights.forEach((l, i) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'handle'; b.dataset.i = i;
-    b.setAttribute('aria-label', `${LIGHT_TYPES[l.type].label}. Arrow keys move it.`);
-    b.innerHTML = `<span class="lbl">${shortLabel(LIGHT_TYPES[l.type])}</span>`;
+    b.setAttribute('aria-label', `${typeLabel(l.type)}. Arrow keys move it.`);
+    b.innerHTML = `<span class="lbl">${ESS_LABEL[l.type] || shortLabel(LIGHT_TYPES[l.type])}</span>`;
     handlesEl.appendChild(b);
   });
 }
@@ -3568,8 +3568,17 @@ const colorLabel = l => { const T = LIGHT_TYPES[l.type];
   if (usesKelvin(T)) return l.kelvin + 'K';
   if (T.colors) return COLOR_OPTS[l.color || T.color].label;
   return { hps:'Sodium', lps:'589 nm', merc:'Mercury', flare:'Strontium', weld:'Arc', mono:'LED' }[T.spec] || ''; };
-const typeOptions = sel => LIGHT_GROUPS.map(([g, gl]) => `<optgroup label="${gl}">${Object.entries(LIGHT_TYPES).filter(([, v]) => v.group === g)
-  .map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${v.label}</option>`).join('')}</optgroup>`).join('');
+/* the short list: the lights that turn up in an animated feature and actually flare. Everything else (softboxes, fire,
+   neon, screens) is better served by a glow or convolution in comp. The other types stay defined so older settings
+   files still load; a light of one of them shows under Other. */
+const ESSENTIAL = [
+  ['In the shot', [['sun', 'Sun'], ['led', 'Car headlight'], ['sodium', 'Streetlight'], ['followspot', 'Stage spotlight'], ['filament', 'Bare bulb'], ['flashlight', 'Flashlight']]],
+  ['Just off frame · aimed into the lens', [['xenon', 'Torch into the lens'], ['dedo', 'Small spot into the lens'], ['mirror', 'Mirror bounce of the sun']]]
+];
+const ESS_LABEL = Object.fromEntries(ESSENTIAL.flatMap(([, ts]) => ts));
+const typeLabel = k => ESS_LABEL[k] || LIGHT_TYPES[k].label;
+const typeOptions = sel => ESSENTIAL.map(([gl, ts]) => `<optgroup label="${gl}">${ts.map(([k, n]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${n}</option>`).join('')}</optgroup>`).join('')
+  + (sel && !ESS_LABEL[sel] && LIGHT_TYPES[sel] ? `<optgroup label="Other"><option value="${sel}" selected>${LIGHT_TYPES[sel].label}</option></optgroup>` : '');
 function renderLightList(){
   const list = $('#lightList');
   list.innerHTML = state.lights.map((l, i) => {
@@ -3577,7 +3586,7 @@ function renderLightList(){
     const where = (Math.abs(sx) > A || Math.abs(sy) > 1) ? 'off frame' : 'in frame';
     return `<div class="light-row"><button type="button" class="light-item" data-i="${i}" aria-pressed="${i === state.sel}">
       <span class="sw" style="background:${swatch(l)};box-shadow:0 0 10px ${swatch(l)}"></span>
-      <span>${l.name ? l.name.replace(/[<>&]/g, '') + ' · ' : ''}${T.label}</span><span class="meta">${colorLabel(l)} · ${T.dref ? fmtDist(l.dist) + ' · ' : ''}${where}</span></button><button type="button" class="light-x" data-x="${i}" aria-label="Remove ${T.label}" title="Remove (Delete)">×</button></div>`;
+      <span>${l.name ? l.name.replace(/[<>&]/g, '') + ' · ' : ''}${typeLabel(l.type)}</span><span class="meta">${colorLabel(l)} · ${T.dref ? fmtDist(l.dist) + ' · ' : ''}${where}</span></button><button type="button" class="light-x" data-x="${i}" aria-label="Remove ${typeLabel(l.type)}" title="Remove (Delete)">×</button></div>`;
   }).join('');
   $('#lightCount').textContent = `${state.lights.length} / 4`;
   $('#addLight').disabled = state.lights.length >= 4;
@@ -3623,7 +3632,7 @@ function renderEditor(){
 const dirLabel = d => { const n = ((d % 360) + 360) % 360; return ['Right', 'Up-right', 'Up', 'Up-left', 'Left', 'Down-left', 'Down', 'Down-right'][Math.round(n/45) % 8]; };
 function renderLightPanel(){ renderLightList(); renderEditor(); updateOSD(); }
 $('#lightList').addEventListener('click', e => { const x = e.target.closest('.light-x'); if (x){ removeLight(+x.dataset.x); return; } const b = e.target.closest('.light-item'); if (!b) return; state.sel = +b.dataset.i; renderLightPanel(); });
-$('#addType').innerHTML = typeOptions('tungsten');
+$('#addType').innerHTML = typeOptions('sun');
 $('#addLight').onclick = () => {
   if (state.lights.length >= 4) return;
   const n = state.lights.length, ty = $('#addType').value;
@@ -3696,8 +3705,8 @@ const dirtLabel = v => v < 0.08 ? 'Pristine' : v < 0.35 ? 'Clean' : v < 0.7 ? 'U
 $('#dirt').addEventListener('input', e => { state.dirt = +e.target.value; $('#dirtOut').textContent = dirtLabel(state.dirt); });
 seg($('#motSeg'), 'motion', [['locked', 'Locked'], ['handheld', 'Handheld'], ['loose', 'Loose'], ['pan', 'Pan'], ['whip', 'Whip']], state.motion, v => { state.motion = v; });
 /* starting point: no lights; pick one and it lands where it shows off its flare */
-const QUICK = [['sun', 'Sun', [0.55, 0.38]], ['hmi', 'HMI', [0.6, 0.3]], ['led', 'Headlight', [0.35, -0.2]], ['sodium', 'Streetlight', [0.7, 0.5]],
-  ['filament', 'Bare bulb', [0.4, 0.15]], ['flame', 'Candle', [0.25, -0.2]], ['xenon', 'Torch into lens', 'off', 0.08], ['dedo', 'Spot into lens', 'off', 0.62], ['mirror', 'Mirror bounce', 'off', 0.3]];
+const QUICK = [['sun', 'Sun', [0.55, 0.38]], ['led', 'Headlight', [0.35, -0.2]], ['sodium', 'Streetlight', [0.7, 0.5]], ['followspot', 'Spotlight', [-0.5, 0.45]],
+  ['filament', 'Bare bulb', [0.4, 0.15]], ['flashlight', 'Flashlight', [0.3, -0.1]], ['xenon', 'Torch into lens', 'off', 0.08], ['dedo', 'Spot into lens', 'off', 0.62], ['mirror', 'Mirror bounce', 'off', 0.3]];
 /* off-frame flare lights go where a crew puts them: the torch operator beside the camera at lens height, the spot on a
    stand at the top corner, the mirror bounce from off to the side. Each sits just outside the frame line by its own
    size, so the light itself is hidden but the flare pours in from that edge. */
@@ -3707,7 +3716,7 @@ function offFramePos(type, y){
 }
 $('#quickAdd').innerHTML = QUICK.map(([k, n, pos]) => `<button type="button" data-t="${k}">${n}${pos === 'off' ? '<small>just off frame</small>' : ''}</button>`).join('');
 $('#quickAdd').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
+  const b = e.target.closest('button'); if (!b || state.lights.length >= 4) return;
   const q = QUICK.find(r => r[0] === b.dataset.t);
   let pos = q[2] === 'off' ? offFramePos(q[0], q[3]) : q[2];
   // don't stack a new light on top of one already there: take the next free spot
@@ -3875,7 +3884,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 38;
+const APP_VERSION = 39;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
