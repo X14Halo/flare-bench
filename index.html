@@ -399,7 +399,7 @@ const COLOR_OPTS = { red: { label:'Red', nm:626, w:9 }, amber: { label:'Amber', 
 const LIGHT_TYPES = {
   sun:       { group:'day', label:'Sun', kelvin:4300, size:0.034, angR:0.00466, over:10.75, occl:true, shape:0, flick:'sun', note:'Its real size: half a degree across, so it grows with a longer lens. What looks bigger is glare, not the disc. Lower its colour temperature for golden hour.' },
   moon:      { group:'day', label:'Full moon', kelvin:4100, size:0.033, angR:0.0045, over:6, occl:true, shape:0, note:'Reflected sunlight, about 18 stops below the sun: it only flares on a night exposure.' },
-  window:    { group:'day', label:'Sunlit window', kelvin:6200, ext:[0.41, 0.51], over:2.5, shape:9, dref:8, kTrace:0.2, rot:true, note:'Bright sky through panes and mullions. Bring it close for big rectangular ghosts.' },
+  window:    { group:'day', label:'Sunlit window', kelvin:6200, ext:[0.41, 0.51], over:2.5, shape:9, dref:8, kTrace:0.2, rot:true, note:'Bright sky through a window opening. Bring it close for big rectangular ghosts.' },
 
   hmi:       { group:'film', label:'HMI 18K Fresnel', kelvin:5600, size:0.026, over:10.5, shape:1, dref:60, spec:'hmi', flick:'ballast', beam:22, aim:0, dir:-90, note:'' },
   hmipar:    { group:'film', label:'HMI 4K PAR', kelvin:5600, size:0.016, over:10, shape:2, dref:30, spec:'hmi', flick:'ballast', beam:12, aim:0, dir:-90, note:'' },
@@ -1097,7 +1097,7 @@ float bigFlame(vec2 q, float seed){
   float tips = smoothstep(3.3, 1.6, y + 0.9*(vn2(vec2(x*4.0 + seed*2.0, uWT*2.7)) - 0.5));
   return core*smoothstep(-0.05, 0.3, y)*tips*(0.75 + 0.35*vn2(vec2(x*5.0, y*3.0 - uWT*5.0)));
 }
-/* extended emitters: panel (diffusion fabric), tube (capsule), window (panes and mullions), string lights, a row of
+/* extended emitters: panel (diffusion fabric), tube (capsule), window (an even bright opening), string lights, a row of
    candles, a lamp shade */
 float emitterS(vec2 d, float t, vec3 e, float seed){
   float c = cos(e.z), sn = sin(e.z);
@@ -1106,9 +1106,8 @@ float emitterS(vec2 d, float t, vec3 e, float seed){
   if (t < 7.5){ float m = max(q.x, q.y); return smoothstep(1.0, 0.94, m)*(0.86 + 0.14*(1.0 - q.x*q.x)*(1.0 - q.y*q.y)); }
   if (t < 8.5){ vec2 k = vec2(r.x, max(abs(r.y) - (e.y - e.x), 0.0)); return smoothstep(e.x, e.x*0.7, length(k)); }
   if (t < 9.5){
-    float pane = smoothstep(1.0, 0.985, max(q.x, q.y));
-    float mull = smoothstep(0.03, 0.045, q.x)*smoothstep(0.025, 0.04, q.y)*smoothstep(0.012, 0.022, abs(q.y - 0.5));
-    return pane*mull*(0.9 + 0.1*r.y/e.y);
+    // just the bright opening: the panes and frame of a real window come from the render, at whatever angle it is seen
+    return smoothstep(1.0, 0.97, max(q.x, q.y))*(0.9 + 0.1*r.y/e.y);
   }
   if (t < 11.5){
     if (q.x > 1.0) return 0.0;
@@ -1586,7 +1585,7 @@ const FS_VEIL = `#version 300 es
 precision highp float; precision highp int;
 in vec2 vUV; out vec4 o;
 uniform int uN; uniform vec2 uLp[4]; uniform vec3 uLf[4]; uniform vec3 uLe[4];
-uniform float uVeil, uDirtAmt, uA, uDirtR, uSmear, uSmearAng, uSmMode, uEdge, uScratch, uPhys, uScat, uR0, uScatR, uScatNorm, uKE, uTail, uTailRc, uTailNorm, uBarrel, uLeak, uTime, uStopK, uLeakMode, uLeakWarm;
+uniform vec4 uGsp[4]; uniform float uVeil, uDirtAmt, uA, uDirtR, uSmear, uSmearAng, uSmMode, uEdge, uScratch, uPhys, uScat, uR0, uScatR, uScatNorm, uKE, uTail, uTailRc, uTailNorm, uBarrel, uLeak, uTime, uStopK, uLeakMode, uLeakWarm;
 uniform vec3 uVeilTint, uEdgeTint, uBarrelTint; uniform vec3 uLc[4]; uniform sampler2D uDirt, uVis;
 ${NOISE}${FLICK}${SHAPE}
 /* Fine parallel marks on the front glass (wipe strokes, fingerprint ridges) act like a weak grating: each scatters light
@@ -1722,12 +1721,15 @@ void main(){
     vec2 d = shapeOff(p - uLp[i], uLe[i]); float r2 = dot(d, d);
     float veil = uVeil*(0.5 + 0.5*exp(-r2/2.0) + 1.2*exp(-r2/0.15));
     // the long tail of the lens's glare spread function, in every mode: it is what makes a Cooke or a K35 glow
-    float ptail = pow(1.0 + r2/(uTailRc*uTailRc), -1.3)*uTailNorm;
+    // an extended source's glare is its shape convolved with the spread function: widen the core by the source's size
+    // (uGsp: core radius, its normalisation, tail radius, its normalisation for this light), so the light is spread over
+    // the area instead of sitting at full point-source strength across all of it
+    float ptail = pow(1.0 + r2/(uGsp[i].z*uGsp[i].z), -1.3)*uGsp[i].w;
     if (uPhys < 0.5) veil = 0.5*veil + uKE*uTail*ptail;
     if (uPhys > 0.5){
       // surface micro-roughness scatter: a normalised glare spread function, strong right beside the source and
       // gone within a fraction of the frame. The broad veil from inter-reflections already comes from the traced ghosts.
-      float pr = exp(-sqrt(r2)/uScatR)/(r2 + uR0*uR0)*uScatNorm;
+      float pr = exp(-sqrt(r2)/uScatR)/(r2 + uGsp[i].x*uGsp[i].x)*uGsp[i].y;
       // the long tail of the lens's glare spread function (haze in the glass, coatings, the inside of the barrel): only a
       // percent or two of the light, but falling off slowly (about r^-2.6), so a source as bright as the sun still blows
       // out a wide soft mass around itself and lifts the sky and shadows near it, as real sun shots do
@@ -2330,7 +2332,19 @@ void main(){
   o = vec4(col*(1.0 - 0.5*uCat.z)*uHalfH*uHalfH*uE*vVis*win*flick(uLi, vY), 1.0);
 }`;
 
+/* GLSL leaves smoothstep undefined when edge0 >= edge1, and these shaders use falling edges all over (1 inside a shape,
+   0 outside). Most GPUs happen to return the obvious answer; some (Metal through ANGLE among them) need not, which can
+   punch black holes in shapes. Every shader gets a smoothstep with the same formula that is defined both ways. */
+const SS_GLSL = `
+float ss(float a, float b, float x){ float t = clamp((x - a)/(b - a), 0.0, 1.0); return t*t*(3.0 - 2.0*t); }
+vec2 ss(float a, float b, vec2 x){ vec2 t = clamp((x - a)/(b - a), 0.0, 1.0); return t*t*(3.0 - 2.0*t); }
+vec3 ss(float a, float b, vec3 x){ vec3 t = clamp((x - a)/(b - a), 0.0, 1.0); return t*t*(3.0 - 2.0*t); }
+vec4 ss(float a, float b, vec4 x){ vec4 t = clamp((x - a)/(b - a), 0.0, 1.0); return t*t*(3.0 - 2.0*t); }
+vec2 ss(vec2 a, vec2 b, vec2 x){ vec2 t = clamp((x - a)/(b - a), 0.0, 1.0); return t*t*(3.0 - 2.0*t); }
+vec3 ss(vec3 a, vec3 b, vec3 x){ vec3 t = clamp((x - a)/(b - a), 0.0, 1.0); return t*t*(3.0 - 2.0*t); }
+`;
 function compile(type, src){
+  if (/\bsmoothstep\s*\(/.test(src)) src = src.replace(/\bsmoothstep\s*\(/g, 'ss(').replace(/(precision highp float;[^\n]*\n)/, '$1' + SS_GLSL);
   const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
   if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
   return s;
@@ -2963,12 +2977,14 @@ const scatNormCache = {};
 const tailNormCache = {};
 function tailNorm(rc){
   if (tailNormCache[rc]) return tailNormCache[rc];
+  if (Object.keys(tailNormCache).length > 400) for (const k in tailNormCache) delete tailNormCache[k];
   let sum = 0; const dr = 0.0005;
   for (let r = dr/2; r < 4; r += dr) sum += 2*Math.PI*r*Math.pow(1 + r*r/(rc*rc), -1.3)*dr;
   return (tailNormCache[rc] = 1/sum);
 }
 function scatNorm(r0, a){
   const key = r0 + '|' + a; if (scatNormCache[key]) return scatNormCache[key];
+  if (Object.keys(scatNormCache).length > 400) for (const k in scatNormCache) delete scatNormCache[k];
   let sum = 0; const dr = 0.0005;
   for (let r = dr/2; r < 4; r += dr) sum += 2*Math.PI*r*Math.exp(-r/a)/(r*r + r0*r0)*dr;
   return (scatNormCache[key] = 1/sum);
@@ -3309,12 +3325,12 @@ function render(t){
     derived.forEach((d, i) => {
       const ext = clamp(0.4 + 1.6*Math.sqrt(d.flux), 0.4, 2.6)*Math.max(1, L.squeeze*0.8) + (d.kind ? Math.max(d.ex, d.ey) : 0);
       const defK = 1/(1 + 3*d.bmax/Math.max(d.kind ? Math.min(d.ex, d.ey) : d.size, 0.005));
-      const sU = d.kind ? Math.max(0.005, 0.3*Math.min(d.ex, d.ey)) : d.size, fs = d.kind ? Math.min(1, Math.PI*sU*sU/d.area) : 1;
+      const sU = d.kind ? Math.max(0.005, 0.3*Math.sqrt(d.ex*d.ey)) : d.size, fs = d.kind ? Math.min(1, Math.PI*sU*sU/d.area) : 1;
       const k = 2*Math.PI*K_TRACE*d.flux*d.kT*(0.4 + 0.6*defK)*fs*MS*MX.star;
       gl.uniform2f(s.u.uL, d.sx, d.sy); gl.uniform1f(s.u.uExt, ext); gl.uniform3f(s.u.uSE, d.ex, d.ey, d.ang);
       { const lr = Math.hypot(d.sx, d.sy) || 1; gl.uniform3f(s.u.uCat, d.sx/lr, d.sy/lr, Math.min(d.cat, 0.6)); }
       gl.uniform3f(s.u.uE, d.col[0]*k, d.col[1]*k, d.col[2]*k);
-      gl.uniform1i(s.u.uLi, i); gl.uniform1f(s.u.uAtten, d.atten); gl.uniform1f(s.u.uS, d.kind ? Math.max(0.005, 0.3*Math.min(d.ex, d.ey)) : d.size); gl.uniform1f(s.u.uSeed, (state.lights[i].id*7.31) % 50);
+      gl.uniform1i(s.u.uLi, i); gl.uniform1f(s.u.uAtten, d.atten); gl.uniform1f(s.u.uS, d.kind ? Math.max(0.005, 0.3*Math.sqrt(d.ex*d.ey)) : d.size); gl.uniform1f(s.u.uSeed, (state.lights[i].id*7.31) % 50);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     });
   }
@@ -3331,10 +3347,10 @@ function render(t){
       gl.uniform2f(s.u.uL, d.sx, d.sy); gl.uniform1f(s.u.uExt, ext*Math.max(1, L.sqx*0.8) + (d.kind ? Math.max(d.ex, d.ey) : 0)); gl.uniform3f(s.u.uSE, d.ex, d.ey, d.ang);
       gl.uniform1f(s.u.uStar, starAmt*defK);
       // the glow widens with the source, so keep its brightness tied to the source's surface brightness, not its total output
-      const sU = d.kind ? Math.max(0.005, 0.3*Math.min(d.ex, d.ey)) : d.size;
+      const sU = d.kind ? Math.max(0.005, 0.3*Math.sqrt(d.ex*d.ey)) : d.size;
       const fs = d.kind ? Math.min(1, Math.PI*sU*sU/d.area) : Math.min(1, Math.pow(0.03/Math.max(d.size, 1e-4), 2));
       const ks = d.flux*30*fs*MS*MX.star; gl.uniform3f(s.u.uFlux, d.col[0]*ks, d.col[1]*ks, d.col[2]*ks);
-      gl.uniform1i(s.u.uLi, i); gl.uniform1f(s.u.uAtten, d.atten); gl.uniform1f(s.u.uS, d.kind ? Math.max(0.005, 0.3*Math.min(d.ex, d.ey)) : d.size); gl.uniform1f(s.u.uSeed, (state.lights[i].id*7.31) % 50);
+      gl.uniform1i(s.u.uLi, i); gl.uniform1f(s.u.uAtten, d.atten); gl.uniform1f(s.u.uS, d.kind ? Math.max(0.005, 0.3*Math.sqrt(d.ex*d.ey)) : d.size); gl.uniform1f(s.u.uSeed, (state.lights[i].id*7.31) % 50);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     });
   }
@@ -3385,7 +3401,14 @@ function render(t){
       // integrated veiling glare of the whole lens: modern cine primes ~0.5-1%, older and anamorphic glass a few percent
       const tail = (L.tail ?? 0.01) + (f === 'diffusion' ? 0.03 : 0) + (f === 'clear' ? 0.002 : 0) + (f === 'scratched' ? 0.006 : 0);
       const rc = (L.tailRc ?? 0.03) + (f === 'diffusion' ? 0.02 : 0);
-      gl.uniform1f(v.u.uTail, tail); gl.uniform1f(v.u.uTailRc, rc); gl.uniform1f(v.u.uTailNorm, tailNorm(rc)); }
+      gl.uniform1f(v.u.uTail, tail); gl.uniform1f(v.u.uTailRc, rc); gl.uniform1f(v.u.uTailNorm, tailNorm(rc));
+      const gsp = new Float32Array(16);
+      derived.forEach((d, i) => {
+        const w2 = d.kind ? 0.6*d.ex*d.ey : 0, q = v => Math.round(v*2000)/2000;
+        const r0e = q(Math.sqrt(r0*r0 + w2)), rce = q(Math.sqrt(rc*rc + w2));
+        gsp.set([r0e, scatNorm(r0e, a), rce, tailNorm(rce)], i*4);
+      });
+      gl.uniform4fv(v.u.uGsp, gsp); }
     gl.uniform1f(v.u.uScratch, f === 'scratched' ? 0.3 : 0);
     full();
   }
@@ -3852,7 +3875,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 37;
+const APP_VERSION = 38;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
