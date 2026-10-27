@@ -15,7 +15,10 @@ realistic by default, quick to direct, and driven by real shot data rather than 
   per-light flare gain in stops for art direction.
 - **Real lens behaviour.** Pick a lens family (clean modern, large-format, warm character, vintage, classic and modern
   anamorphic, zoom). Ghosts are ray traced through a lens model, and the star comes from the iris shape. Veiling glare,
-  streaks and haze all react to the T-stop, focal length, focus and light position.
+  streaks and haze all react to the T-stop, focal length, focus and light position. It opens on Large-format modern
+  (ARRI Signature Prime class, Roger Deakins' choice for *1917*) with a subtle flare amount and clean front glass.
+- **Made for comp.** Turn off **Sources** under the frame to see the flare alone, as it would go over a render, and
+  **Handles** to hide the light markers. **+ Add light** (or `A`) opens the light picker; `Delete` removes a light.
 - **Before/after wipe**, a **present mode** (press `P`), and **Share a look**, which saves every setting to one file.
 
 The panel's **How it works → Under the hood** section explains the optics in detail: the lens prescriptions, ghost
