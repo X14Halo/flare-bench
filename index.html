@@ -315,9 +315,9 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <div class="field"><span id="mainsLbl">Mains power</span><div class="seg" role="radiogroup" aria-labelledby="mainsLbl" id="mainsSeg"></div></div>
       <div class="field"><span>Front filter</span><select id="filter" aria-label="Front filter"></select></div>
       <label class="switch"><span>Matte box flags<small>Cut light from sources outside the frame</small></span><input type="checkbox" id="matte"></label>
-      <div class="row"><label for="dirt">Front glass</label><input type="range" id="dirt" min="0" max="1" step="0.01" value="0.45"><output id="dirtOut" for="dirt">Used</output></div>
+      <div class="row"><label for="dirt">Front glass</label><input type="range" id="dirt" min="0" max="1" step="0.01" value="0.15"><output id="dirtOut" for="dirt">Clean</output></div>
       <div class="pair">
-        <div class="field"><span>Smears</span><select id="smear" aria-label="Smears on the front glass"><option value="none">Clean</option><option value="wipe" selected>Wipe marks</option><option value="circular">Circular wipe</option><option value="print">Fingerprint</option></select></div>
+        <div class="field"><span>Smears</span><select id="smear" aria-label="Smears on the front glass"><option value="none" selected>Clean</option><option value="wipe">Wipe marks</option><option value="circular">Circular wipe</option><option value="print">Fingerprint</option></select></div>
         <div class="field"><span>Light leaks</span><select id="leak" aria-label="Camera light leaks"><option value="off" selected>Sealed</option><option value="gap">Gap leak · follows lights</option><option value="gapStrong">Gap leak · strong</option><option value="door">Camera door · random</option></select></div>
       </div>
       <label class="switch"><span>Light handles<small>Press H to toggle</small></span><input type="checkbox" id="showHandles" checked></label>
@@ -2593,14 +2593,14 @@ function mkLight(type, x, y, op){ const T = LIGHT_TYPES[type];
   return { id: ++lid, type, x, y, ev: 0, kelvin: T.kelvin || 3000, sizeMul: 1, occl: T.occl, ballast: 'electronic', op: op || 'sweep', dist: T.dref || Infinity,
     angle: T.rotDef || 0, color: T.color, aim: T.aim ?? 0, dir: T.dir ?? -90, jit: jitter() }; }
 const state = {
-  lens: 'modern', camera: 'digital', filter: 'none', t: 2.8, ev: 0, matte: false, dirt: 0.45,
+  lens: 'lfmodern', camera: 'digital', filter: 'none', t: 2.8, ev: 0, matte: false, dirt: 0.15,
   motion: 'locked', scene: 'black', wind: reduceMotion ? 0 : 0.6, mode: 'traced', quality: 64,
   fps: 24, shutter: 180, mains: 60,
-  focus: Infinity, autoFocus: true, iris: 'lens', smear: 'wipe', leak: 'off', haze: 0, showSet: true, showSrc: true,
+  focus: Infinity, autoFocus: true, iris: 'lens', smear: 'none', leak: 'off', haze: 0, showSet: true, showSrc: true,
   plateEV: 0, pan: 0, tilt: 0, focal: null, compare: false, split: 0.5,
   screen: { on: true, thr: 3, amount: 1, ghosts: 1, hold: true },
   comps: { ghosts: true, star: true, streak: true, veil: true, dirt: true, bloom: true, barrel: true, sensor: false },
-  master: 0.35,
+  master: 0.2,
   mix: { ghostsS: 1, ghostsL: 1, rainbow: 0, star: 1, streak: 1, glare: 1, dirt: 1, barrel: 1, bloom: 1, sensor: 0 },
   handles: true, lights: [], sel: 0
 };
@@ -3852,7 +3852,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 36;
+const APP_VERSION = 37;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
