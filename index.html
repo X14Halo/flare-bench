@@ -253,6 +253,21 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
 
     <section class="group">
       <h2>Shot</h2>
+      <div class="add"><button type="button" class="btn" id="loadShot">Load utility pass…</button><button type="button" class="btn" id="exampleShot">Example street</button></div>
+      <input type="file" id="shotFile" accept=".exr" multiple hidden>
+      <p class="sub" id="shotInfo" role="status"></p>
+      <div id="shotCtl" hidden>
+        <div class="row"><label for="shotAmb">Ambient</label><input type="range" id="shotAmb" min="0" max="100" step="1"><output id="shotAmbOut" for="shotAmb"></output></div>
+        <div class="row"><label for="shotEV">Scene exposure</label><input type="range" id="shotEV" min="-6" max="6" step="0.1" value="0"><output id="shotEVOut" for="shotEV">±0.0</output></div>
+        <div class="pair">
+          <div class="field"><span>Scene units</span><select id="shotUnits" aria-label="Scene units"><option value="auto">Auto</option><option value="1">Metres</option><option value="0.01">Centimetres</option><option value="0.001">Millimetres</option><option value="0.3048">Feet</option><option value="0.0254">Inches</option></select></div>
+          <div class="field"><span>View</span><select id="shotView" aria-label="What the shot shows"><option value="lit">Lit by the flare lights</option><option value="albedo">Surface colour</option><option value="normals">Normals</option><option value="depth">Depth</option></select></div>
+        </div>
+        <label class="switch"><span>Snap lights to the scene<small>A light dragged onto a surface takes its distance</small></span><input type="checkbox" id="shotSnap" checked></label>
+        <label class="switch"><span>Shadows<small>From what the camera can see</small></span><input type="checkbox" id="shotShadow" checked></label>
+        <label class="switch"><span>Show the scene<small>Off: the flare alone over black, ready to comp</small></span><input type="checkbox" id="shotShow" checked></label>
+        <div class="add"><button type="button" class="btn" id="clearShot">Back to black</button></div>
+      </div>
       <div id="plateUI" hidden>
       <div class="add"><button type="button" class="btn" id="loadPlate">Load plate…</button><button type="button" class="btn" id="clearPlate">Black</button><input type="file" id="plateFile" accept=".exr,.hdr,image/*" hidden></div>
       <p class="sub" id="plateInfo">Black. Load an EXR or HDR render or photo to light it with its real highlights.</p>
@@ -343,11 +358,19 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Flicker</dt><dd>Sodium streetlights and bulbs on mains power pulse at twice the mains frequency, and LED headlights at their PWM rate; off-speed frame rates and shutters make them beat, and the rolling shutter turns that into bands.</dd>
         <dt>Using it in comp</dt><dd>The flare is meant to go over a render, where the light itself already exists. Turn off <b>Sources</b> under the frame to see the flare alone: the ghosts, star, streak and the glow the lens adds around the light, without the sun's disc or the bulb. <b>Handles</b> hides the light markers for a clean view, and Present (<kbd>P</kbd>) hides the panel.</dd>
       </dl>
+      <h3 class="how-h">Seeing it in the shot</h3>
+      <p class="how-intro">Instead of a painted mock-up, the tool builds a rough model of a real shot from the render's own utility pass, in a second or two, and the flare lights live inside it.</p>
+      <dl>
+        <dt>A rough model from the utility pass</dt><dd>Load (or drop on the frame) the utility AOVs of a render: world position, normals and depth, plus surface colour and emission if you have them, in one EXR or several. Every pixel becomes a point of the scene as the shot camera saw it, so the model has the shot's exact framing and perspective. <b>Example street</b> builds the same buffers for a made-up night street, generated in the browser.</dd>
+        <dt>The flare lights live in it</dt><dd>Drag a light onto the scene and it takes the distance of the surface under it (a streetlamp head, a car's headlight), so its flare, its size and its depth of field are right for where it really is. A light behind something the camera can see, such as a post, a tree or a building edge, is hidden, partly hidden lights dim, and the flare follows. The lights also light the model, with their real falloff, beam and colour and screen-space shadows, so a streetlight pools on the road and a headlight washes the street ahead of the car. <b>View</b> shows the surface colour, normals or depth to check the pass was read right.</dd>
+        <dt>The camera comes with it</dt><dd>The shot camera is read from the EXR metadata where the renderer wrote it: transform, field of view, focal length, f-stop and focus distance, checked against the pixels before it is trusted. Without it, the camera is solved from the position and depth passes themselves. Scene units (metres or centimetres) are guessed from how far away things are, and can be set by hand.</dd>
+        <dt>What it reads</dt><dd>Scanline EXRs, single- or multi-part, with ZIP, ZIPS, RLE or no compression, the lossless kinds used for data passes. Layers are found by their usual names: P, pos or position; N or normal; depth, Z or distance (an unfiltered depth is preferred when there is one); surfaceColor, albedo or diffuse colour; emission. Anything wider than 2048 pixels is read at half size or less.</dd>
+      </dl>
       <h3 class="how-h">From prototype to a Nuke tool</h3>
       <p class="how-intro">Flare Bench is the look and the behaviour. In production the same model would run as a Nuke node fed by the shot itself, so nobody places a flare by hand. The goal is one artist step: tag the light.</p>
       <dl>
         <dt>1. Tag the light in Houdini</dt><dd>Lights get a <b>Flare</b> switch (a parameter on the studio's light asset) and an optional <b>flare gain</b> in stops. The sun is tagged by default; fill and cheat lights never are. That is the only thing a lighter has to do.</dd>
-        <dt>2. The render carries everything</dt><dd>At render time the pipeline writes the shot camera (focal length, filmback, f-stop, focus distance, lens package) and, for every tagged light on every frame, its position in frame, distance, colour, intensity, size and how visible it is (a few rays toward each light, so the sun going behind a tree dims its flare) into the EXR's metadata. There are no locators to export or keep in sync: the data travels with the frames, so a re-render or a camera change updates the flare automatically. Big shaped lights can also get their own light-group pass, which the node reads as the light's real shape at whatever angle it is seen.</dd>
+        <dt>2. The render carries everything</dt><dd>At render time the pipeline writes the shot camera (focal length, filmback, f-stop, focus distance, lens package; many renderers already put these in the EXR header) and, for every tagged light on every frame, its position in frame, distance, colour, intensity, size and how visible it is (a few rays toward each light, so the sun going behind a tree dims its flare) into the EXR's metadata. There are no locators to export or keep in sync: the data travels with the frames, so a re-render or a camera change updates the flare automatically. Big shaped lights can also get their own light-group pass, which the node reads as the light's real shape at whatever angle it is seen.</dd>
         <dt>3. One node in comp</dt><dd>A single Flare node goes on the beauty. It reads the camera and the tagged lights from the metadata, sets the lens from the show's camera package, holds the tagged lights out of the screen flares so nothing flares twice, and outputs the flare as its own layers. The compositor only touches taste: the overall amount, a light's gain, the elements mix.</dd>
         <dt>Why this way</dt><dd>It needs no new habits. Lighters already tag light groups and comp already reads EXR metadata, so the flare follows the real camera and lights with no hand-matching, and it stays right through every revision. A starting-point Houdini export for this prototype, which writes the camera and tagged lights to a file, is in the project's GitHub repository.</dd>
       </dl>
@@ -1063,6 +1086,18 @@ const VS_FULL = `#version 300 es
 layout(location=0) in vec2 aPos; out vec2 vUV;
 void main(){ vUV = aPos*0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
+/* with a shot loaded: is the light in front of whatever the camera sees at this point of the frame? */
+const SHOTVIS = `
+uniform float uShot, uShotAsp; uniform sampler2D uGP; uniform float uLd[4];
+float shotOpen(vec2 w, float ld){
+  vec2 uv = vec2(w.x/(2.0*uShotAsp) + 0.5, w.y*0.5 + 0.5);
+  if (uv.x < 0.0 || uv.x >= 1.0 || uv.y < 0.0 || uv.y >= 1.0) return 1.0;
+  ivec2 sz = textureSize(uGP, 0);
+  float g = texelFetch(uGP, min(ivec2(uv*vec2(sz)), sz - 1), 0).w;
+  if (g <= 0.0) return 1.0;
+  return ld < 0.0 ? 0.0 : step(ld, g);
+}
+`;
 /* the plate: a flat frame fitted to the picture height, or a lat-long panorama seen through this lens's field of view */
 const PLATE = `
 uniform float uPlateK, uPlateEV, uPlateAsp, uPlateLod, uPlateFit; uniform vec3 uPano;
@@ -1087,7 +1122,7 @@ uniform sampler2D uBg, uMask, uBase, uBaseMask, uFol; uniform vec2 uCam; uniform
 uniform int uN; uniform vec4 uL[4]; uniform vec3 uLC[4]; uniform vec3 uLF[4]; uniform float uLT[4];
 uniform vec4 uLS[4]; uniform vec4 uBk[4]; uniform float uBubble, uOnion, uBkF;
 uniform float uHaze, uSet, uSrc; uniform vec4 uBm[4]; uniform vec3 uLH[4]; uniform float uSeedL[4];
-${NOISE}${FLICK}${WIND}${SHAPE}${PLATE}
+${NOISE}${FLICK}${WIND}${SHAPE}${PLATE}${SHOTVIS}
 ${IRIS_SRC}
 /* a candle flame in units of its half-width: a teardrop that sways */
 float candle(vec2 q, float seed){
@@ -1189,7 +1224,7 @@ void main(){
     vec2 dq = shaped ? shapeOff(d, LS.xyz) : d;
     float r = length(dq);
     float fl = flick(i, p.y);
-    float occ = mix(1.0, m, L.w);
+    float occ = uShot > 0.5 ? shotOpen(w, uLd[i]) : mix(1.0, m, L.w);
     float em = shaped ? emitterS(d, uLT[i], LS.xyz, uSeedL[i]) : emitter(d, s, uLT[i], uSeedL[i])*(0.7 + 0.3*exp(-r*r/(s*s*0.15)));
     float sRef = shaped ? max(0.004, min(LS.x, LS.y)) : s;
     // a faint glow right at the source (the lamp's own envelope, a flame's halo); capped in absolute terms, so on the sun it
@@ -1318,7 +1353,7 @@ void main(){
 const FS_VIS = `#version 300 es
 precision highp float; precision highp int;
 uniform sampler2D uMask, uBaseMask, uFol; uniform vec4 uLw[4]; out vec4 o;
-${NOISE}${WIND}
+${NOISE}${WIND}${SHOTVIS}
 void main(){
   int i = min(int(gl_FragCoord.x), 3);
   vec4 L = uLw[i];
@@ -1330,6 +1365,7 @@ void main(){
     float a = fk*2.39996323;
     vec2 w = L.xy + rr*vec2(cos(a), sin(a));
     vec2 uv = vec2((w.x + 3.0)/6.0, (w.y + 1.1)/2.2);
+    if (uShot > 0.5){ s += shotOpen(w, uLd[i]); continue; }
     float inside = step(0.0, uv.x)*step(uv.x, 1.0)*step(0.0, uv.y)*step(uv.y, 1.0);
     float open;
     if (uWind > 0.0){
@@ -2510,12 +2546,18 @@ function gridVAO(N){
    viewed through this lens's field of view, so it pans with the camera. */
 const SCENES = {
   black:  { name: 'Black', paint: paintBlack, gain: 1, wind: false, haze: 0, preset: () => [] },
-  custom: { name: 'Plate', paint: paintBlack, gain: 1, wind: false, haze: 0, preset: null }
+  custom: { name: 'Plate', paint: paintBlack, gain: 1, wind: false, haze: 0, preset: null },
+  shot:   { name: 'Shot', paint: paintBlack, gain: 1, wind: false, haze: 0, preset: null }
 };
 const sceneTex = {};
 const plate = { tex: null, name: '', hdr: false, pano: false, w: 0, h: 0, aspect: 1.78 };
 let whiteTex = null;
 function loadScene(id){
+  if (id === 'shot'){
+    if (!SHOT.on || !shotGL.rt) return loadScene('black');
+    if (!whiteTex){ const c = document.createElement('canvas'); c.width = c.height = 4; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 4, 4); whiteTex = makeTex(c, gl.CLAMP_TO_EDGE, false); }
+    return { bg: shotGL.rt.t, mask: whiteTex, base: shotGL.rt.t, baseMask: whiteTex, fol: whiteTex };
+  }
   if (sceneTex[id]) return sceneTex[id];
   if (id === 'custom' && plate.tex){
     if (!whiteTex){ const c = document.createElement('canvas'); c.width = c.height = 4; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 4, 4); whiteTex = makeTex(c, gl.CLAMP_TO_EDGE, false); }
@@ -2532,10 +2574,15 @@ function loadScene(id){
 /* the camera's focal length: the shot camera's if one was set, else the lens design's own */
 function camEfl(){ return state.focal || lensEfl(lensOf()); }
 function plateUniforms(sp, H){
+  const Lv = lensOf(), tanV = Lv.viewTanV || Lv.halfH/lensEfl(Lv);
+  if (state.scene === 'shot' && SHOT.on && SHOT.S && shotGL.rt){
+    gl.uniform1f(sp.u.uPlateK, 1); gl.uniform1f(sp.u.uPlateEV, state.plateEV); gl.uniform1f(sp.u.uPlateAsp, SHOT.S.aspect); gl.uniform1f(sp.u.uPlateFit, 1);
+    gl.uniform1f(sp.u.uPlateLod, Math.log2(Math.max(1, SHOT.S.H/H))); gl.uniform3f(sp.u.uPano, 0, 0, tanV);
+    return;
+  }
   const K = state.scene === 'custom' && plate.tex ? (plate.pano ? 2 : 1) : 0;
-  const tanV = lensOf().halfH/camEfl();
   gl.uniform1f(sp.u.uPlateK, K); gl.uniform1f(sp.u.uPlateEV, state.plateEV); gl.uniform1f(sp.u.uPlateAsp, plate.aspect);
-  const fit = Math.max(1, lensOf().aspect/plate.aspect); gl.uniform1f(sp.u.uPlateFit, fit);
+  const fit = Math.max(1, Lv.aspect/plate.aspect); gl.uniform1f(sp.u.uPlateFit, fit);
   const lod = K === 2 ? Math.log2(Math.max(1, plate.w*tanV/(2*Math.PI)*2/H)) : K === 1 ? Math.log2(Math.max(1, plate.h/(H*fit))) : 0;
   gl.uniform1f(sp.u.uPlateLod, lod); gl.uniform3f(sp.u.uPano, state.pan*Math.PI/180, state.tilt*Math.PI/180, tanV);
 }
@@ -2621,7 +2668,7 @@ const state = {
   motion: 'locked', scene: 'black', wind: reduceMotion ? 0 : 0.6, mode: 'traced', quality: 64,
   fps: 24, shutter: 180, mains: 60,
   focus: Infinity, autoFocus: true, iris: 'lens', smear: 'none', leak: 'off', haze: 0, showSet: true, showSrc: true,
-  plateEV: 0, pan: 0, tilt: 0, focal: null, compare: false, split: 0.5,
+  plateEV: 0, pan: 0, tilt: 0, focal: null, compare: false, split: 0.5, shotKind: '',
   screen: { on: true, thr: 3, amount: 1, ghosts: 1, hold: true },
   comps: { ghosts: true, star: true, streak: true, veil: true, dirt: true, bloom: true, barrel: true, sensor: false },
   master: 0.2,
@@ -2629,7 +2676,19 @@ const state = {
   handles: true, lights: [], sel: 0
 };
 state.lights = SCENES.black.preset();
-const lensOf = () => LENSES.find(l => l.id === state.lens);
+const SHOT = { on: false, S: null, kind: '', units: null, ambient: 0.3, view: 'lit', snap: true, shadows: true, busy: false };
+/* the lens as this shot sees it: a shot's camera (or a set focal length) changes the field of view, which the lens
+   model takes as an effective sensor half-height for its own design focal length */
+let lensView = null;
+const lensOf = () => {
+  const L = LENSES.find(l => l.id === state.lens);
+  const sh = SHOT.on && SHOT.S && state.scene === 'shot' ? SHOT.S : null;
+  if (!sh && !state.focal) return L;
+  const tanV = sh ? sh.cam.tanV : L.halfH/state.focal, aspect = sh ? sh.aspect : L.aspect, key = L.id + '|' + tanV + '|' + aspect;
+  if (lensView && lensView.key === key) return lensView.o;
+  lensView = { key, o: Object.assign(Object.create(L), { aspect, halfH: tanV*lensEfl(L), viewTanV: tanV }) };
+  return lensView.o;
+};
 /* build (and cache) the traced optical system for the current lens + front filter */
 const sysCache = {};
 function lensSystem(){
@@ -3044,7 +3103,7 @@ function render(t){
     // defocus blur-circle radius on the sensor, (f^2/N)|1/D - 1/F|/2, in frame units; anamorphics squeeze it horizontally
     const Dmm = T.dref ? l.dist*1000 : Infinity;
     const inv = Math.abs((isFinite(Dmm) ? 1/Dmm : 0) - (isFinite(focusMM) ? 1/focusMM : 0));
-    const by = eflmm*eflmm/state.t*inv/2/L.halfH, bx = by/(L.anamorphic ? L.sqx : 1);
+    const fcam = camEfl(), by = fcam*inv/(2*state.t*(L.halfH/eflmm)), bx = by/(L.anamorphic ? L.sqx : 1);
     const cat = L.cat*Math.min(Math.hypot(sx/A, sy), 1.4)*(1 - 0.75*clamp(stops0/4, 0, 1));
     // per-light flare gain (as in Animal Logic's flare pass): scales what the lens does with this light, not the light itself
     const fg = Math.pow(2, l.flareGain || 0);
@@ -3093,6 +3152,9 @@ function render(t){
 
   bindTex(FLICK_UNIT, flickTex);
 
+  // 0. a loaded shot: light its rough model with the flare lights (only when something changed)
+  if (state.scene === 'shot' && SHOT.on && SHOT.S) shotShade();
+
   // 1. scene plate + emitters + atmospheric in-scatter
   target(sceneRT); const s0 = P.scene; gl.useProgram(s0.p);
   bindTex(0, tex.bg); bindTex(1, tex.mask); bindTex(2, tex.base); bindTex(3, tex.baseMask); bindTex(4, tex.fol);
@@ -3105,6 +3167,7 @@ function render(t){
   gl.uniform1f(s0.u.uBkF, L.bokehFringe ?? 0.2); gl.uniform1f(s0.u.uHaze, state.haze); gl.uniform1f(s0.u.uSet, state.showSet ? 1 : 0);
   gl.uniform1f(s0.u.uSrc, state.showSrc ? 1 : 0); plateUniforms(s0, H);
   gl.uniform4fv(s0.u.uBm, arrBm); gl.uniform3fv(s0.u.uLH, arrLH); gl.uniform1fv(s0.u.uSeedL, arrSeed);
+  shotVisUniforms(s0);
   full();
 
   // 2. occlusion of each light
@@ -3112,6 +3175,7 @@ function render(t){
   bindTex(1, tex.mask); bindTex(3, tex.baseMask); bindTex(4, tex.fol);
   gl.uniform1i(P.vis.u.uMask, 1); gl.uniform1i(P.vis.u.uBaseMask, 3); gl.uniform1i(P.vis.u.uFol, 4); gl.uniform4fv(P.vis.u.uLw, arr16b);
   gl.uniform1f(P.vis.u.uWind, wind); gl.uniform1f(P.vis.u.uWT, t);
+  shotVisUniforms(P.vis);
   full();
 
   // 3. ray-trace every ghost path for every light (traced modes)
@@ -3503,6 +3567,7 @@ function applyDrag(){
   const l = state.lights[state.sel], A = lensOf().aspect;
   const sx = clamp(drag.sx + drag.ox, -A - 0.7, A + 0.7), sy = clamp(drag.sy + drag.oy, -1.45, 1.45);
   l.x = clamp(sx + cam.x, -3.6, 3.6); l.y = clamp(sy + cam.y, -1.5, 1.5);
+  shotSnap(l);
 }
 viewport.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
@@ -3528,7 +3593,7 @@ handlesEl.addEventListener('keydown', e => {
   const i = +h.dataset.i, l = state.lights[i], step = e.shiftKey ? 0.1 : 0.02;
   const mv = { ArrowLeft:[-step,0], ArrowRight:[step,0], ArrowUp:[0,step], ArrowDown:[0,-step] }[e.key];
   if (!mv) return;
-  e.preventDefault(); state.sel = i; l.x = clamp(l.x + mv[0], -3.6, 3.6); l.y = clamp(l.y + mv[1], -1.5, 1.5);
+  e.preventDefault(); state.sel = i; l.x = clamp(l.x + mv[0], -3.6, 3.6); l.y = clamp(l.y + mv[1], -1.5, 1.5); shotSnap(l);
   renderLightPanel();
 });
 handlesEl.addEventListener('focusin', e => { const h = e.target.closest('.handle'); if (h && state.sel !== +h.dataset.i){ state.sel = +h.dataset.i; renderLightPanel(); } });
@@ -3647,7 +3712,7 @@ $('#addLight').onclick = () => {
   if (state.lights.length >= 4) return;
   const n = state.lights.length, ty = $('#addType').value;
   const sp = LIGHT_TYPES[ty].group === 'flare' ? offFramePos(ty, [0.08, -0.3, 0.55, -0.6][n % 4]) : [[0.55, 0.35], [-0.6, -0.25], [0.2, -0.45], [-0.25, 0.5]][n % 4];
-  state.lights.push(mkLight(ty, sp[0] + cam.x, sp[1] + cam.y, ty === 'xenon' ? 'sweep' : undefined));
+  state.lights.push(mkLight(ty, sp[0] + cam.x, sp[1] + cam.y, ty === 'xenon' ? 'sweep' : undefined)); shotSnap(state.lights[state.lights.length - 1]);
   state.sel = state.lights.length - 1; syncHandles(); renderLightPanel();
 };
 
@@ -3737,12 +3802,12 @@ $('#quickAdd').addEventListener('click', e => {
     pos = alt.find(p => !taken(p)) || pos;
   }
   const l = mkLight(q[0], pos[0] + cam.x, pos[1] + cam.y, q[0] === 'xenon' ? 'sweep' : undefined);
-  pickerOpen = false; state.lights.push(l); state.sel = state.lights.length - 1; syncHandles(); renderLightPanel();
+  pickerOpen = false; shotSnap(l); state.lights.push(l); state.sel = state.lights.length - 1; syncHandles(); renderLightPanel();
 });
 /* the light picker: shown over an empty frame, and on demand from the + Add light button under the frame */
 let pickerOpen = false;
 function syncEmpty(){
-  const n = state.lights.length, full = n >= 4, plateOn = state.scene === 'custom' && !!plate.tex;
+  const n = state.lights.length, full = n >= 4, plateOn = (state.scene === 'custom' && !!plate.tex) || (state.scene === 'shot' && SHOT.on);
   if (full) pickerOpen = false;
   $('#empty').hidden = !(pickerOpen || (n === 0 && !plateOn));
   $('#emptyT').textContent = n ? 'Add another light' : 'Add a light to see how this lens flares';
@@ -3796,10 +3861,724 @@ $('#clearPlate').addEventListener('click', () => { state.scene = 'black'; syncSh
 const FEATURE_PLATES = false;
 if (FEATURE_PLATES){ $('#plateUI').hidden = false; $('#screenUI').hidden = false; $('#importBtn').hidden = false; document.querySelector('.empty-s').hidden = false; }
 viewport.addEventListener('dragover', e => { e.preventDefault(); });
-viewport.addEventListener('drop', e => { e.preventDefault(); if (!FEATURE_PLATES) return; const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (!f) return; if (/\.json$/i.test(f.name)) importFile(f); else loadPlateFile(f); });
+viewport.addEventListener('drop', e => { e.preventDefault(); const fl = [...((e.dataTransfer && e.dataTransfer.files) || [])]; if (fl.length && fl.every(f => /\.exr$/i.test(f.name))){ loadShotFiles(fl); return; } if (!FEATURE_PLATES) return; const f = fl[0]; if (!f) return; if (/\.json$/i.test(f.name)) importFile(f); else loadPlateFile(f); });
 $('#plateEV').addEventListener('input', e => { state.plateEV = +e.target.value; $('#plateEVOut').textContent = fmtEV(state.plateEV); });
 $('#pan').addEventListener('input', e => { state.pan = +e.target.value; $('#panOut').textContent = state.pan + '°'; });
 $('#tilt').addEventListener('input', e => { state.tilt = +e.target.value; $('#tiltOut').textContent = state.tilt + '°'; });
+/* ======================= shots from a render's utility pass =======================
+   Load the utility AOVs of a real render (world position, normals, depth, surface colour) and the tool builds a rough
+   model of the shot from them: lit by the flare lights, hiding lights behind what is in front of them, and taking
+   distances from the surfaces the lights are dragged onto. The example street is generated the same way. */
+/* ---- the example shot: a night street, built procedurally as the utility pass a renderer would write ----
+   Ray-cast once on load into the same buffers a loaded EXR fills: world position, normal, surface colour, emission,
+   distance to camera and alpha. Units are metres, y up, the camera looking down -z. */
+function makeExampleStreet(W, H){
+  const rnd = (() => { let a = 1234567; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; }; })();
+  const hash = (x, y) => { const s = Math.sin(x*127.1 + y*311.7)*43758.5453; return s - Math.floor(s); };
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  const nrm = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0]/l, a[1]/l, a[2]/l]; };
+  const cross = (a, b) => [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]];
+  // camera: standing in the left lane at eye height, looking down the street a little to the right and up
+  const C = [-2.1, 1.55, 6], T = [0.9, 3.0, -60];
+  const fwd = nrm(sub(T, C)), right = nrm(cross(fwd, [0, 1, 0])), up = cross(right, fwd), back = [-fwd[0], -fwd[1], -fwd[2]];
+  const focal = 35, tanH = 18/focal, tanV = tanH*H/W;
+  const prims = [];
+  const box = (x0, y0, z0, x1, y1, z1, mat) => prims.push({ k: 0, lo: [Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1)], hi: [Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1)], mat });
+  const cyl = (x, z, r, y0, y1, mat) => prims.push({ k: 1, x, z, r, y0, y1, lo: [x - r, y0, z - r], hi: [x + r, y1, z + r], mat });
+  const sph = (x, y, z, r, mat) => prims.push({ k: 2, c: [x, y, z], r, lo: [x - r, y - r, z - r], hi: [x + r, y + r, z + r], mat });
+  const solid = c => () => ({ a: c, e: null });
+  // ground: asphalt road with lane markings; concrete sidewalks on a 15 cm curb
+  const road = p => {
+    const n = 0.85 + 0.3*hash(Math.floor(p[0]*3), Math.floor(p[2]*3));
+    const dash = Math.abs(p[0] - 0.05) < 0.07 && ((p[2]/6) - Math.floor(p[2]/6)) < 0.5;
+    const edge = Math.abs(Math.abs(p[0]) - 4.75) < 0.07;
+    if (dash) return { a: [0.62, 0.52, 0.22], e: null };
+    if (edge) return { a: [0.55, 0.55, 0.52], e: null };
+    return { a: [0.055*n, 0.056*n, 0.06*n], e: null };
+  };
+  const walk = p => { const g = (Math.abs((p[2]/1.5) - Math.round(p[2]/1.5)) < 0.02) ? 0.75 : 1; const n = 0.9 + 0.2*hash(Math.floor(p[0]*2), Math.floor(p[2]*2)); return { a: [0.27*g*n, 0.26*g*n, 0.25*g*n], e: null }; };
+  box(5, 0, -175, 8.5, 0.15, 25, walk); box(-8.5, 0, -175, -5, 0.15, 25, walk);
+  // buildings along both sides: pastel facades, a grid of windows, some of them lit, shopfronts on the ground floor
+  const pal = [[0.55, 0.4, 0.33], [0.4, 0.46, 0.55], [0.6, 0.54, 0.4], [0.34, 0.44, 0.38], [0.52, 0.36, 0.4], [0.62, 0.58, 0.52], [0.45, 0.35, 0.28]];
+  const facade = (side, z0, z1, h, col, seed) => p => {
+    const n = side > 0 ? -1 : 1;   // facade faces the street
+    if (Math.abs(p[0] - (side > 0 ? 8.5 : -8.5)) > 0.02 && Math.abs(p[0] - (side > 0 ? 8.5 : -8.5)) < 50 && p[1] < h - 0.02 && Math.abs(Math.abs(p[0]) - 8.5) > 0.01) return { a: col.map(v => v*0.8), e: null };
+    const u = p[2] - z1, y = p[1];
+    if (y < 3.0){   // shopfront
+      const cell = Math.floor(u/4.2), fu = u/4.2 - cell;
+      if (y > 0.5 && y < 2.7 && fu > 0.1 && fu < 0.9){ const lit = hash(cell + seed, 3.1) < 0.55;
+        return { a: [0.03, 0.035, 0.04], e: lit ? [1.0*0.32, 0.75*0.32, 0.45*0.32] : null }; }
+      return { a: col.map(v => v*0.6), e: null };
+    }
+    const fl = Math.floor((y - 3.0)/3.1), fy = (y - 3.0)/3.1 - fl, cell = Math.floor(u/2.6), fu = u/2.6 - cell;
+    if (fy > 0.28 && fy < 0.8 && fu > 0.25 && fu < 0.75 && y < h - 1.0){
+      const lit = hash(cell*7.3 + seed, fl*3.7) < 0.28, warm = hash(cell + seed*2.1, fl) < 0.7;
+      return { a: [0.035, 0.04, 0.05], e: lit ? (warm ? [0.9*0.2, 0.6*0.2, 0.32*0.2] : [0.55*0.16, 0.65*0.16, 0.8*0.16]) : null };
+    }
+    if (fy < 0.06) return { a: col.map(v => v*0.85), e: null };   // floor band
+    return { a: col, e: null };
+  };
+  for (const side of [1, -1]){
+    let z = 25, i = 0;
+    while (z > -168){
+      const len = 9 + rnd()*14, h = 8 + rnd()*17, d = 10 + rnd()*8, col = pal[Math.floor(rnd()*pal.length)];
+      const x0 = side*8.5, x1 = side*(8.5 + d);
+      box(x0, 0, z - len, x1, h, z, facade(side, z - len, z, h, col, i*13 + (side > 0 ? 0 : 101)));
+      z -= len + (rnd() < 0.25 ? 0.6 : 0); i++;
+    }
+  }
+  box(-40, 0, -195, 40, 32, -178, facade(0, -195, -178, 32, [0.4, 0.42, 0.5], 77));
+  // street lamps: a pole, an arm over the road and a head whose underside glows sodium orange
+  const metal = solid([0.12, 0.12, 0.13]);
+  const lampHeads = [];
+  for (const side of [1, -1]) for (let k = 0; k < 6; k++){
+    const z = -8 - k*25 - (side < 0 ? 12.5 : 0), x = side*5.55;
+    cyl(x, z, 0.09, 0.15, 6.3, metal);
+    box(x, 6.08, z - 0.06, side*4.25, 6.2, z + 0.06, metal);
+    const hx0 = side*3.85, hx1 = side*4.55;
+    box(hx0, 5.98, z - 0.2, hx1, 6.2, z + 0.2, p => p[1] < 5.985 ? { a: [0.2, 0.2, 0.2], e: [1.0*6, 0.5*6, 0.12*6] } : { a: [0.12, 0.12, 0.13], e: null });
+    lampHeads.push({ p: [side*4.2, 5.95, z], side, k });
+  }
+  // trees on the sidewalks
+  const leaf = p => { const n = 0.7 + 0.6*hash(Math.floor(p[0]*4 + p[1]*3), Math.floor(p[2]*4 - p[1]*2)); return { a: [0.06*n, 0.11*n, 0.045*n], e: null }; };
+  for (const [x, z] of [[6.9, -21], [6.9, -46], [6.9, -71], [-6.9, -33], [-6.9, -58], [-6.9, -96]]){
+    cyl(x, z, 0.16, 0.15, 2.8, solid([0.1, 0.07, 0.05])); sph(x, 4.4, z, 2.1, leaf);
+  }
+  // a car coming toward the camera in the right lane, headlights on; a parked car on the left
+  const paint = c => p => ({ a: c, e: null });
+  const glass = solid([0.02, 0.025, 0.03]);
+  const carX0 = 1.35, carX1 = 3.15, front = -21;
+  box(carX0, 0.32, front - 4.5, carX1, 1.0, front, paint([0.45, 0.06, 0.05]));
+  box(carX0 + 0.12, 1.0, front - 3.3, carX1 - 0.12, 1.43, front - 1.35, glass);
+  for (const wx of [carX0 - 0.02, carX1 - 0.14]) for (const wz of [front - 3.9, front - 1.35]) box(wx, 0, wz - 0.32, wx + 0.16, 0.64, wz + 0.32, solid([0.02, 0.02, 0.02]));
+  const hl = [[carX0 + 0.22, carX0 + 0.55], [carX1 - 0.55, carX1 - 0.22]];
+  for (const [a, b] of hl) box(a, 0.62, front - 0.02, b, 0.78, front + 0.01, solid([0.9, 0.9, 0.9]));
+  box(-4.6, 0.3, -47, -2.85, 0.95, -42.6, paint([0.08, 0.16, 0.34])); box(-4.45, 0.95, -46, -3.0, 1.35, -43.6, glass);
+  // emission of the headlight lenses (the flare lights themselves sit on them)
+  const headlights = hl.map(([a, b]) => [(a + b)/2, 0.7, front + 0.05]);
+  const hlMat = { a: [0.9, 0.9, 0.9], e: [12, 11.6, 10.8] };
+  prims.forEach(pr => { if (pr.k === 0 && pr.lo[2] === front - 0.02 && pr.hi[1] === 0.78) pr.mat = () => hlMat; });
+  // screen-space bounds of every primitive, so each pixel only tests what can cover it
+  const proj = p => { const v = sub(p, C), z = -dot(v, back); if (z < 0.05) return null; return [dot(v, right)/z/tanH, dot(v, up)/z/tanV]; };
+  prims.forEach(pr => {
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, ok = true;
+    for (let c = 0; c < 8; c++){
+      const q = proj([c & 1 ? pr.hi[0] : pr.lo[0], c & 2 ? pr.hi[1] : pr.lo[1], c & 4 ? pr.hi[2] : pr.lo[2]]);
+      if (!q){ ok = false; break; }
+      x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]);
+    }
+    pr.sr = ok ? [x0, y0, x1, y1] : [-1e9, -1e9, 1e9, 1e9];
+  });
+  const N = W*H, P = new Float32Array(N*3), Nn = new Float32Array(N*3), Al = new Float32Array(N*3), Em = new Float32Array(N*3), D = new Float32Array(N), A = new Float32Array(N);
+  const hit = { t: 0, n: null, pr: null };
+  for (let j = 0; j < H; j++){
+    const v = 1 - (j + 0.5)/H*2;
+    for (let i = 0; i < W; i++){
+      const u = (i + 0.5)/W*2 - 1;
+      const d = nrm([right[0]*u*tanH + up[0]*v*tanV - back[0], right[1]*u*tanH + up[1]*v*tanV - back[1], right[2]*u*tanH + up[2]*v*tanV - back[2]]);
+      let best = Infinity, bn = null, bpr = null;
+      if (d[1] < -1e-6){ const t = -C[1]/d[1]; if (t > 0){ best = t; bn = [0, 1, 0]; bpr = { mat: road }; } }
+      for (let k = 0; k < prims.length; k++){
+        const pr = prims[k], r = pr.sr;
+        if (u < r[0] || u > r[2] || v < r[1] || v > r[3]) continue;
+        if (pr.k === 0){
+          let t0 = 0, t1 = best, ax = -1, sg = 0;
+          for (let a = 0; a < 3; a++){
+            const inv = 1/d[a]; let ta = (pr.lo[a] - C[a])*inv, tb = (pr.hi[a] - C[a])*inv, s = -Math.sign(inv);
+            if (ta > tb){ const q = ta; ta = tb; tb = q; }
+            if (ta > t0){ t0 = ta; ax = a; sg = s; } if (tb < t1) t1 = tb;
+            if (t0 > t1) break;
+          }
+          if (t0 <= t1 && ax >= 0 && t0 < best){ best = t0; bn = [0, 0, 0]; bn[ax] = sg; bpr = pr; }
+        } else if (pr.k === 1){
+          const ox = C[0] - pr.x, oz = C[2] - pr.z, a = d[0]*d[0] + d[2]*d[2], b = ox*d[0] + oz*d[2], c = ox*ox + oz*oz - pr.r*pr.r, disc = b*b - a*c;
+          if (disc > 0 && a > 1e-9){ const t = (-b - Math.sqrt(disc))/a, y = C[1] + t*d[1];
+            if (t > 0 && t < best && y > pr.y0 && y < pr.y1){ best = t; bn = nrm([ox + t*d[0], 0, oz + t*d[2]]); bpr = pr; } }
+        } else {
+          const o = sub(C, pr.c), b = dot(o, d), c = dot(o, o) - pr.r*pr.r, disc = b*b - c;
+          if (disc > 0){ const t = -b - Math.sqrt(disc); if (t > 0 && t < best){ best = t; bn = nrm([o[0] + t*d[0], o[1] + t*d[1], o[2] + t*d[2]]); bpr = pr; } }
+        }
+      }
+      const q = j*W + i;
+      if (!bpr || best > 2000) continue;
+      const p = [C[0] + best*d[0], C[1] + best*d[1], C[2] + best*d[2]], m = bpr.mat(p, bn);
+      P[q*3] = p[0]; P[q*3 + 1] = p[1]; P[q*3 + 2] = p[2];
+      Nn[q*3] = bn[0]; Nn[q*3 + 1] = bn[1]; Nn[q*3 + 2] = bn[2];
+      Al[q*3] = m.a[0]; Al[q*3 + 1] = m.a[1]; Al[q*3 + 2] = m.a[2];
+      if (m.e){ Em[q*3] = m.e[0]; Em[q*3 + 1] = m.e[1]; Em[q*3 + 2] = m.e[2]; }
+      D[q] = best; A[q] = 1;
+    }
+  }
+  const toFrame = p => { const vv = sub(p, C), z = -dot(vv, back); return { x: dot(vv, right)/z/tanH*(W/H), y: dot(vv, up)/z/tanV, dist: Math.hypot(vv[0], vv[1], vv[2]) }; };
+  const near = (s) => lampHeads.filter(l => l.side === s).map(l => ({ l, f: toFrame(l.p) })).filter(o => Math.abs(o.f.x) < W/H*0.95 && Math.abs(o.f.y) < 0.95).sort((a, b) => a.f.dist - b.f.dist)[0];
+  const lights = [];
+  for (const s of [1, -1]){ const o = near(s); if (o) lights.push({ type: 'sodium', ...o.f }); }
+  headlights.forEach(p => lights.push({ type: 'led', ...toFrame(p) }));
+  return { name: 'Example street (procedural)', W, H, P, N: Nn, alb: Al, emit: Em, dist: D, alpha: A, aspect: W/H, units: 1,
+    cam: { C, right, up, back, tanH, tanV, from: 'example' }, meta: { focal, fstop: 2.8, focusM: 21 }, lights, channels: 'P, N, depth, surface colour, emission' };
+}
+/* ---- OpenEXR reader for utility passes ----
+   Scanline single- and multi-part files with NONE, RLE, ZIPS or ZIP compression: the lossless ones renderers use for
+   data passes (position, normal, depth), read with the browser's own inflate. Returns every part with its header
+   attributes and a lazy channel reader, so only the channels that are needed get decoded. */
+const EXR_HALF = (() => {
+  const t = new Float32Array(65536);
+  for (let h = 0; h < 65536; h++){
+    const s = h & 0x8000 ? -1 : 1, e = (h >> 10) & 31, m = h & 1023;
+    t[h] = e === 0 ? s*m*Math.pow(2, -24) : e === 31 ? (m ? NaN : s*Infinity) : s*(1 + m/1024)*Math.pow(2, e - 15);
+  }
+  return t;
+})();
+const EXR_COMP = ['none', 'rle', 'zips', 'zip', 'piz', 'pxr24', 'b44', 'b44a', 'dwaa', 'dwab', 'htj2k256', 'htj2k32'];
+async function exrInflate(u8){
+  const s = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+function exrPredict(t){
+  for (let i = 1; i < t.length; i++) t[i] = (t[i - 1] + t[i] - 128) & 255;
+  const out = new Uint8Array(t.length), h = (t.length + 1) >> 1; let k = 0;
+  for (let i = 0; i < h; i++){ out[k++] = t[i]; if (k < t.length) out[k++] = t[h + i]; }
+  return out;
+}
+function exrUnRLE(src, n){
+  const out = new Uint8Array(n); let p = 0, o = 0;
+  while (p < src.length && o < n){
+    const c = (src[p] << 24) >> 24; p++;
+    if (c < 0){ for (let k = 0; k < -c && o < n; k++) out[o++] = src[p++]; }
+    else { const v = src[p++]; for (let k = 0; k <= c && o < n; k++) out[o++] = v; }
+  }
+  return out;
+}
+function exrHeaders(buf){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  if (dv.getUint32(0, true) !== 20000630) throw new Error('not an OpenEXR file');
+  const ver = dv.getUint32(4, true), multi = !!(ver & 0x1000), tiled = !!(ver & 0x200), deep = !!(ver & 0x800);
+  let p = 8;
+  const cstr = () => { let s = ''; while (u8[p] !== 0) s += String.fromCharCode(u8[p++]); p++; return s; };
+  const parts = [];
+  for (;;){
+    if (u8[p] === 0){ p++; break; }
+    const h = {};
+    for (;;){
+      if (u8[p] === 0){ p++; break; }
+      const name = cstr(), type = cstr(), size = dv.getInt32(p, true); p += 4;
+      const q = p; let v;
+      switch (type){
+        case 'string': v = new TextDecoder().decode(u8.subarray(q, q + size)); break;
+        case 'int': v = dv.getInt32(q, true); break;
+        case 'float': v = dv.getFloat32(q, true); break;
+        case 'double': v = dv.getFloat64(q, true); break;
+        case 'compression': case 'lineOrder': case 'envmap': case 'deepImageState': v = u8[q]; break;
+        case 'box2i': v = [0, 1, 2, 3].map(i => dv.getInt32(q + i*4, true)); break;
+        case 'v2i': v = [0, 1].map(i => dv.getInt32(q + i*4, true)); break;
+        case 'v2f': case 'v3f': case 'm33f': case 'm44f': case 'chromaticities': case 'box2f':
+          v = Array.from({ length: size/4 }, (_, i) => dv.getFloat32(q + i*4, true)); break;
+        case 'v2d': case 'v3d': case 'm33d': case 'm44d': v = Array.from({ length: size/8 }, (_, i) => dv.getFloat64(q + i*8, true)); break;
+        case 'chlist': {
+          v = []; let r = q;
+          while (u8[r] !== 0){ let n = ''; while (u8[r] !== 0) n += String.fromCharCode(u8[r++]); r++;
+            v.push({ name: n, type: dv.getInt32(r, true), xs: dv.getInt32(r + 8, true), ys: dv.getInt32(r + 12, true) }); r += 16; }
+          break; }
+        case 'stringvector': { v = []; let r = q; while (r < q + size){ const n = dv.getInt32(r, true); r += 4; v.push(new TextDecoder().decode(u8.subarray(r, r + n))); r += n; } break; }
+        default: v = { type, size };
+      }
+      h[name] = v; p = q + size;
+      if (!multi && false) break;
+    }
+    parts.push(h);
+    if (!multi) break;
+  }
+  return { parts, p, multi, tiled, deep, dv, u8 };
+}
+function exrOpen(buf){
+  const E = exrHeaders(buf), { dv } = E; let p = E.p;
+  const parts = E.parts.map((h, pi) => {
+    const dw = h.dataWindow, w = dw[2] - dw[0] + 1, ht = dw[3] - dw[1] + 1, comp = EXR_COMP[h.compression] || '?';
+    const lpb = { none: 1, rle: 1, zips: 1, zip: 16, piz: 32, pxr24: 16, b44: 32, b44a: 32, dwaa: 32, dwab: 256 }[comp] || 1;
+    const nChunks = h.chunkCount || Math.ceil(ht/lpb);
+    return { index: pi, header: h, name: h.name || '', w, h: ht, x0: dw[0], y0: dw[1], comp, lpb, nChunks, tiled: E.tiled || /tile/i.test(h.type || ''),
+      deep: E.deep || /deep/i.test(h.type || ''), channels: (h.channels || []).slice() };
+  });
+  for (const pt of parts){ pt.offsets = []; for (let i = 0; i < pt.nChunks; i++){ pt.offsets.push(Number(dv.getBigUint64(p, true))); p += 8; } }
+  const cache = new Map();
+  async function decodePart(pt){
+    if (cache.has(pt.index)) return cache.get(pt.index);
+    if (pt.tiled || pt.deep) throw new Error(`"${pt.name || 'image'}" is tiled or deep; save utility passes as scanline images`);
+    if (!['none', 'rle', 'zips', 'zip'].includes(pt.comp)) throw new Error(`"${pt.name || 'image'}" uses ${pt.comp.toUpperCase()} compression; save utility passes with ZIP (or ZIPS) compression, which keeps data passes exact`);
+    const chs = pt.channels, bps = chs.map(c => c.type === 1 ? 2 : 4), rowBytes = chs.reduce((s, c, i) => s + pt.w*bps[i], 0);
+    const out = chs.map(() => new Float32Array(pt.w*pt.h));
+    const jobs = pt.offsets.map(off => async () => {
+      let q = off; if (E.multi) q += 4;
+      const y = dv.getInt32(q, true), size = dv.getInt32(q + 4, true); q += 8;
+      const lines = Math.min(pt.lpb, pt.y0 + pt.h - y), raw = rowBytes*lines;
+      let data = E.u8.subarray(q, q + size);
+      if (size < raw){
+        if (pt.comp === 'rle') data = exrPredict(exrUnRLE(data, raw));
+        else if (pt.comp === 'zip' || pt.comp === 'zips') data = exrPredict(await exrInflate(data));
+      }
+      const dd = new DataView(data.buffer, data.byteOffset, data.byteLength); let r = 0;
+      for (let l = 0; l < lines; l++){
+        const row = (y - pt.y0 + l)*pt.w;
+        for (let c = 0; c < chs.length; c++){
+          const o = out[c], t = chs[c].type;
+          if (t === 1) for (let x = 0; x < pt.w; x++){ o[row + x] = EXR_HALF[dd.getUint16(r, true)]; r += 2; }
+          else if (t === 2) for (let x = 0; x < pt.w; x++){ o[row + x] = dd.getFloat32(r, true); r += 4; }
+          else for (let x = 0; x < pt.w; x++){ o[row + x] = dd.getUint32(r, true); r += 4; }
+        }
+      }
+    });
+    for (let i = 0; i < jobs.length; i += 64) await Promise.all(jobs.slice(i, i + 64).map(f => f()));
+    const res = {}; chs.forEach((c, i) => { res[c.name] = out[i]; });
+    cache.set(pt.index, res);
+    return res;
+  }
+  return { parts, multi: E.multi, channel: async (pt, name) => (await decodePart(pt))[name] };
+}
+/* ---- a utility pass -> the buffers of a shot: world position, normal, surface colour, emission, distance, alpha,
+   plus the camera that saw it (from the metadata when it is there, otherwise solved from the pixels themselves) ---- */
+const V3 = {
+  sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot: (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2],
+  len: a => Math.hypot(a[0], a[1], a[2]), scale: (a, s) => [a[0]*s, a[1]*s, a[2]*s],
+  norm: a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0]/l, a[1]/l, a[2]/l]; },
+  cross: (a, b) => [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]
+};
+/* symmetric eigen-decomposition (cyclic Jacobi); returns eigenvalues and eigenvectors (columns) */
+function jacobiEigen(A, n){
+  const a = A.slice(), v = new Float64Array(n*n); for (let i = 0; i < n; i++) v[i*n + i] = 1;
+  for (let sweep = 0; sweep < 80; sweep++){
+    let off = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += a[i*n + j]*a[i*n + j];
+    if (off < 1e-22) break;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++){
+      const apq = a[p*n + q]; if (Math.abs(apq) < 1e-300) continue;
+      const th = (a[q*n + q] - a[p*n + p])/(2*apq), t = Math.sign(th || 1)/(Math.abs(th) + Math.sqrt(th*th + 1)), c = 1/Math.sqrt(t*t + 1), s = t*c;
+      for (let k = 0; k < n; k++){ const akp = a[k*n + p], akq = a[k*n + q]; a[k*n + p] = c*akp - s*akq; a[k*n + q] = s*akp + c*akq; }
+      for (let k = 0; k < n; k++){ const apk = a[p*n + k], aqk = a[q*n + k]; a[p*n + k] = c*apk - s*aqk; a[q*n + k] = s*apk + c*aqk; }
+      for (let k = 0; k < n; k++){ const vkp = v[k*n + p], vkq = v[k*n + q]; v[k*n + p] = c*vkp - s*vkq; v[k*n + q] = s*vkp + c*vkq; }
+    }
+  }
+  return { vals: Array.from({ length: n }, (_, i) => a[i*n + i]), vecs: v };
+}
+function solve3(M, b){
+  const [a, b1, c, d, e, f, g, h, i] = M, det = a*(e*i - f*h) - b1*(d*i - f*g) + c*(d*h - e*g);
+  if (Math.abs(det) < 1e-30) return null;
+  return [((e*i - f*h)*b[0] - (b1*i - c*h)*b[1] + (b1*f - c*e)*b[2])/det,
+          (-(d*i - f*g)*b[0] + (a*i - c*g)*b[1] - (a*f - c*d)*b[2])/det,
+          ((d*h - e*g)*b[0] - (a*h - b1*g)*b[1] + (a*e - b1*d)*b[2])/det];
+}
+/* a spread of valid pixels to fit and check cameras against */
+function shotSamples(S, n){
+  const out = [], W = S.W, H = S.H; let seed = 7;
+  const r = () => (seed = (seed*16807) % 2147483647)/2147483647;
+  for (let k = 0; k < n*6 && out.length < n; k++){
+    const i = Math.floor(r()*W), j = Math.floor(r()*H), q = j*W + i;
+    if (S.alpha[q] < 0.999 || !(S.dist[q] > 0)) continue;
+    out.push({ u: (i + 0.5)/W*2 - 1, v: 1 - (j + 0.5)/H*2, P: [S.P[q*3], S.P[q*3 + 1], S.P[q*3 + 2]], d: S.dist[q], i, j });
+  }
+  return out;
+}
+function camError(cam, smp){
+  const e = smp.map(s => { const v = V3.sub(s.P, cam.C), z = -V3.dot(v, cam.back); if (z <= 0) return 1;
+    return Math.hypot(V3.dot(v, cam.right)/z/cam.tanH - s.u, V3.dot(v, cam.up)/z/cam.tanV - s.v); }).sort((a, b) => a - b);
+  return e[Math.floor(e.length/2)];
+}
+/* camera centre from position + distance: |P - C| = d is linear in C once two samples are subtracted */
+function solveCentre(smp){
+  const M = new Float64Array(9), b = new Float64Array(3);
+  for (let k = 1; k < smp.length; k++){
+    const p = smp[k - 1], q = smp[k], g = V3.scale(V3.sub(q.P, p.P), 2);
+    const rhs = V3.dot(q.P, q.P) - V3.dot(p.P, p.P) - (q.d*q.d - p.d*p.d);
+    for (let r = 0; r < 3; r++){ b[r] += g[r]*rhs; for (let c = 0; c < 3; c++) M[r*3 + c] += g[r]*g[c]; }
+  }
+  return solve3(Array.from(M), Array.from(b));
+}
+/* orientation and field of view from the directions to the pixels (a linear pinhole fit, then made orthonormal) */
+function solveOrientation(smp, C){
+  // two independent 6-unknown problems: right.d - u*tanH*(fwd.d) = 0 and up.d - v*tanV*(fwd.d) = 0
+  const block = which => {
+    const n = 6, A = new Float64Array(n*n); let md = [0, 0, 0];
+    for (const s of smp){
+      const d = V3.norm(V3.sub(s.P, C)), w = which ? s.v : s.u; md = [md[0] + d[0], md[1] + d[1], md[2] + d[2]];
+      const row = [d[0], d[1], d[2], -w*d[0], -w*d[1], -w*d[2]];
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) A[r*n + c] += row[r]*row[c];
+    }
+    const { vals, vecs } = jacobiEigen(Array.from(A), n);
+    let mi = 0; for (let i = 1; i < n; i++) if (vals[i] < vals[mi]) mi = i;
+    let x = Array.from({ length: n }, (_, r) => vecs[r*n + mi]);
+    if (V3.dot(x.slice(3, 6), md) < 0) x = x.map(v => -v);
+    return { axis: x.slice(0, 3), f: x.slice(3, 6) };
+  };
+  const bx = block(0), by = block(1);
+  const fwd = V3.norm(V3.norm(bx.f).map((v, i) => v + V3.norm(by.f)[i]));
+  const right = V3.norm(V3.sub(bx.axis, V3.scale(fwd, V3.dot(bx.axis, fwd))));
+  const up = V3.cross(right, fwd);
+  return { C, right, up, back: V3.scale(fwd, -1), tanH: V3.len(bx.f)/V3.len(bx.axis), tanV: V3.len(by.f)/V3.len(by.axis), from: 'solved from the position and depth passes' };
+}
+const numsOf = v => typeof v === 'number' ? [v] : Array.isArray(v) ? v.map(Number) : typeof v === 'string' ? (v.match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number) : [];
+function inv4(m){   // general 4x4 inverse (row-major)
+  const a = m, inv = new Array(16);
+  inv[0] = a[5]*a[10]*a[15] - a[5]*a[11]*a[14] - a[9]*a[6]*a[15] + a[9]*a[7]*a[14] + a[13]*a[6]*a[11] - a[13]*a[7]*a[10];
+  inv[4] = -a[4]*a[10]*a[15] + a[4]*a[11]*a[14] + a[8]*a[6]*a[15] - a[8]*a[7]*a[14] - a[12]*a[6]*a[11] + a[12]*a[7]*a[10];
+  inv[8] = a[4]*a[9]*a[15] - a[4]*a[11]*a[13] - a[8]*a[5]*a[15] + a[8]*a[7]*a[13] + a[12]*a[5]*a[11] - a[12]*a[7]*a[9];
+  inv[12] = -a[4]*a[9]*a[14] + a[4]*a[10]*a[13] + a[8]*a[5]*a[14] - a[8]*a[6]*a[13] - a[12]*a[5]*a[10] + a[12]*a[6]*a[9];
+  inv[1] = -a[1]*a[10]*a[15] + a[1]*a[11]*a[14] + a[9]*a[2]*a[15] - a[9]*a[3]*a[14] - a[13]*a[2]*a[11] + a[13]*a[3]*a[10];
+  inv[5] = a[0]*a[10]*a[15] - a[0]*a[11]*a[14] - a[8]*a[2]*a[15] + a[8]*a[3]*a[14] + a[12]*a[2]*a[11] - a[12]*a[3]*a[10];
+  inv[9] = -a[0]*a[9]*a[15] + a[0]*a[11]*a[13] + a[8]*a[1]*a[15] - a[8]*a[3]*a[13] - a[12]*a[1]*a[11] + a[12]*a[3]*a[9];
+  inv[13] = a[0]*a[9]*a[14] - a[0]*a[10]*a[13] - a[8]*a[1]*a[14] + a[8]*a[2]*a[13] + a[12]*a[1]*a[10] - a[12]*a[2]*a[9];
+  inv[2] = a[1]*a[6]*a[15] - a[1]*a[7]*a[14] - a[5]*a[2]*a[15] + a[5]*a[3]*a[14] + a[13]*a[2]*a[7] - a[13]*a[3]*a[6];
+  inv[6] = -a[0]*a[6]*a[15] + a[0]*a[7]*a[14] + a[4]*a[2]*a[15] - a[4]*a[3]*a[14] - a[12]*a[2]*a[7] + a[12]*a[3]*a[6];
+  inv[10] = a[0]*a[5]*a[15] - a[0]*a[7]*a[13] - a[4]*a[1]*a[15] + a[4]*a[3]*a[13] + a[12]*a[1]*a[7] - a[12]*a[3]*a[5];
+  inv[14] = -a[0]*a[5]*a[14] + a[0]*a[6]*a[13] + a[4]*a[1]*a[14] - a[4]*a[2]*a[13] - a[12]*a[1]*a[6] + a[12]*a[2]*a[5];
+  inv[3] = -a[1]*a[6]*a[11] + a[1]*a[7]*a[10] + a[5]*a[2]*a[11] - a[5]*a[3]*a[10] - a[9]*a[2]*a[7] + a[9]*a[3]*a[6];
+  inv[7] = a[0]*a[6]*a[11] - a[0]*a[7]*a[10] - a[4]*a[2]*a[11] + a[4]*a[3]*a[10] + a[8]*a[2]*a[7] - a[8]*a[3]*a[6];
+  inv[11] = -a[0]*a[5]*a[11] + a[0]*a[7]*a[9] + a[4]*a[1]*a[11] - a[4]*a[3]*a[9] - a[8]*a[1]*a[7] + a[8]*a[3]*a[5];
+  inv[15] = a[0]*a[5]*a[10] - a[0]*a[6]*a[9] - a[4]*a[1]*a[10] + a[4]*a[2]*a[9] + a[8]*a[1]*a[6] - a[8]*a[2]*a[5];
+  const det = a[0]*inv[0] + a[1]*inv[4] + a[2]*inv[8] + a[3]*inv[12];
+  return det ? inv.map(v => v/det) : null;
+}
+/* camera from the EXR header: a camera-to-world (or world-to-camera) matrix, and the field of view or focal length +
+   filmback. Conventions differ between renderers, so every reading is checked against the pixels and the best kept. */
+function camFromMeta(meta, S, smp){
+  const keys = Object.keys(meta);
+  const find = re => keys.find(k => re.test(k));
+  const val = re => { const k = find(re); return k === undefined ? undefined : meta[k]; };
+  const mats = [];
+  for (const k of keys){
+    const m = numsOf(meta[k]); if (m.length !== 16) continue;
+    if (/(cam(era)?)_?to_?world|camera_?transform|cam_?xform/i.test(k)) mats.push(m);
+    else if (/world_?to_?cam(era)?(?!.*ndc)/i.test(k) && !/ndc|screen/i.test(k)){ const i = inv4(m); if (i) mats.push(i); }
+  }
+  if (!mats.length) return null;
+  let tanH = null;
+  const hf = val(/horizontal_?fov|fov_?h(orizontal)?(_deg)?$|hfov/i); if (hf !== undefined && +hf > 1 && +hf < 179) tanH = Math.tan(+hf*Math.PI/360);
+  if (!tanH){ const vf = val(/vertical_?fov|fov_?v/i); if (vf !== undefined && +vf > 1 && +vf < 179) tanH = Math.tan(+vf*Math.PI/360)*S.W/S.H; }
+  const fl = keys.map(k => /focal_?length$|^focal$|focallength$/i.test(k) ? +numsOf(meta[k])[0] : NaN).find(v => v >= 4 && v <= 3000);
+  if (!tanH && fl){ const ap = val(/horizontal_?aperture|aperture_?(h|x|width)$|film_?back_?(w|width)|sensor_?width/i);
+    let a = ap !== undefined ? +numsOf(ap)[0] : NaN; if (a > 0 && a < 5) a *= 25.4; if (a > 0) tanH = a/2/fl; }
+  let best = null;
+  for (const m0 of mats) for (const tr of [false, true]){
+    const m = tr ? [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15].map(i => m0[i]) : m0;
+    const C = [m[12], m[13], m[14]], right = V3.norm([m[0], m[1], m[2]]), up = V3.norm([m[4], m[5], m[6]]);
+    for (const sgn of [1, -1]){
+      const back = V3.scale(V3.norm([m[8], m[9], m[10]]), sgn);
+      let th = tanH;
+      if (!th){   // fit the field of view to the pixels
+        let n = 0, dd = 0; for (const s of smp){ const v = V3.sub(s.P, C), z = -V3.dot(v, back); if (z > 0 && Math.abs(s.u) > 0.2){ n += (V3.dot(v, right)/z)*s.u; dd += s.u*s.u; } }
+        th = dd ? n/dd : 0.5;
+      }
+      const cam = { C, right, up, back, tanH: th, tanV: th*S.H/S.W, from: 'from the camera in the EXR metadata' };
+      const err = camError(cam, smp);
+      if (!best || err < best.err) best = { cam, err };
+    }
+  }
+  return best;
+}
+const ROLE = {
+  P: ['pos', 'p', 'position', 'pworld', 'p_world', 'worldposition', 'world_position', 'worldpos', 'wp', 'pw', 'positionworld'],
+  N: ['normal', 'n', 'normals', 'nworld', 'n_world', 'worldnormal', 'world_normal', 'normalworld', 'nn'],
+  alb: ['surfacecolor', 'surface_color', 'albedo', 'diffusecolor', 'diffuse_color', 'basecolor', 'base_color', 'diffusealbedo', 'albedo_diffuse', 'diffuse_albedo', 'color_albedo'],
+  emit: ['emission', 'emissive', 'incandescence', 'emit', 'emissioncolor', 'self_illum', 'selfillum'],
+  dist: ['depthnofilter', 'depth', 'z', 'distance', 'zdepth', 'depth_z', 'dist'],
+  alpha: ['a', 'alpha', 'implicitalpha', 'coverage']
+};
+const COMPS = [['r', 'g', 'b'], ['x', 'y', 'z'], ['red', 'green', 'blue']];
+/* files: [{ name, buf }]; returns the shot or throws a readable error */
+async function shotFromEXRs(files){
+  const chans = [], meta = {};
+  for (const f of files){
+    const X = exrOpen(f.buf);
+    for (const pt of X.parts){
+      for (const [k, v] of Object.entries(pt.header)) if (!(k in meta) && !['channels', 'chunkCount'].includes(k)) meta[k] = v;
+      for (const c of pt.channels){
+        const dot = c.name.lastIndexOf('.');
+        const layer = (dot >= 0 ? c.name.slice(0, dot) : (pt.name && !/^(rgba?|subimage\d*|beauty|default)$/i.test(pt.name) ? pt.name : '')).toLowerCase().replace(/^.*\./, '');
+        const comp = (dot >= 0 ? c.name.slice(dot + 1) : c.name).toLowerCase();
+        chans.push({ X, pt, name: c.name, layer, comp, w: pt.w, h: pt.h, file: f.name });
+      }
+    }
+  }
+  const pick3 = role => {
+    for (const ln of ROLE[role]) for (const cs of COMPS){
+      const got = cs.map(c => chans.find(ch => ch.layer === ln && ch.comp === c));
+      if (got.every(Boolean)) return got;
+      if (ln.length === 1){ const g2 = cs.map(c => chans.find(ch => ch.layer === '' && ch.comp === ln + c)); if (g2.every(Boolean)) return g2; }
+    }
+    return null;
+  };
+  const pick1 = role => {
+    for (const ln of ROLE[role]){
+      const c = chans.find(ch => ch.layer === ln && ['r', 'z', 'y', 'a', 'x', ln].includes(ch.comp)) || chans.find(ch => ch.layer === '' && ch.comp === ln);
+      if (c) return c;
+    }
+    return null;
+  };
+  const cP = pick3('P');
+  if (!cP) throw new Error('no world-position pass found (looked for layers like P, pos, position, Pworld)');
+  const W0 = cP[0].w, H0 = cP[0].h, same = c => c && c.w === W0 && c.h === H0;
+  const cN = pick3('N'), cA = pick3('alb'), cE = pick3('emit'), cD = pick1('dist'), cAl = pick1('alpha');
+  const read = async c => c.X.channel(c.pt, c.name);
+  const step = Math.max(1, Math.ceil(W0/2048)), W = Math.floor(W0/step), H = Math.floor(H0/step), n = W*H;
+  const take = (src, out, k, comps) => { for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) out[(j*W + i)*comps + k] = src[(j*step)*W0 + i*step]; };
+  const S = { W, H, P: new Float32Array(n*3), N: new Float32Array(n*3), alb: new Float32Array(n*3), emit: new Float32Array(n*3), dist: new Float32Array(n), alpha: new Float32Array(n) };
+  const found = ['position'];
+  for (let k = 0; k < 3; k++) take(await read(cP[k]), S.P, k, 3);
+  if (cN && same(cN[0])){ for (let k = 0; k < 3; k++) take(await read(cN[k]), S.N, k, 3); found.push('normals'); }
+  if (cA && same(cA[0])){ for (let k = 0; k < 3; k++) take(await read(cA[k]), S.alb, k, 3); found.push('surface colour'); } else S.alb.fill(0.18);
+  if (cE && same(cE[0])){ for (let k = 0; k < 3; k++) take(await read(cE[k]), S.emit, k, 3); found.push('emission'); }
+  if (cAl && same(cAl)) take(await read(cAl), S.alpha, 0, 1);
+  else for (let q = 0; q < n; q++) S.alpha[q] = (S.P[q*3] || S.P[q*3 + 1] || S.P[q*3 + 2]) ? 1 : 0;
+  // filtered passes are premultiplied by coverage at edges: undo it so edge pixels hold real positions
+  for (let q = 0; q < n; q++){
+    const a = S.alpha[q];
+    if (a > 0.02 && a < 0.999){ for (let k = 0; k < 3; k++){ S.P[q*3 + k] /= a; S.N[q*3 + k] /= a; S.alb[q*3 + k] /= a; S.emit[q*3 + k] /= a; } }
+    const l = Math.hypot(S.N[q*3], S.N[q*3 + 1], S.N[q*3 + 2]); if (l > 1e-4) for (let k = 0; k < 3; k++) S.N[q*3 + k] /= l;
+  }
+  let depthName = '';
+  if (cD && same(cD)){ take(await read(cD), S.dist, 0, 1); depthName = cD.name; found.push('depth');
+    if (!/nofilter|unfilter/i.test(cD.name)) for (let q = 0; q < n; q++){ const a = S.alpha[q]; if (a > 0.02 && a < 0.999) S.dist[q] /= a; } }
+  // the camera: metadata first, checked against the pixels; otherwise solved from position + depth
+  const smpD = shotSamples(S, 600);
+  let cam = null, note = '';
+  const smpP = smpD.length ? smpD : (() => { const t = { ...S, dist: S.alpha }; return shotSamples(t, 600); })();
+  const mc = camFromMeta(meta, S, smpP);
+  if (mc && mc.err < 0.004) cam = mc.cam;
+  if (!cam && cD){
+    const C = solveCentre(smpD);
+    if (C){
+      const res = smpD.map(s => Math.abs(V3.len(V3.sub(s.P, C)) - s.d)/s.d).sort((a, b) => a - b)[smpD.length >> 1];
+      if (res < 0.01){ cam = solveOrientation(smpD, C); if (camError(cam, smpD) > 0.004) cam = null; }
+      else note = 'the depth pass looks like planar Z, not distance to the camera';
+    }
+  }
+  if (!cam) throw new Error('could not find the camera: include the render camera in the EXR metadata, or a depth pass that measures distance to the camera' + (note ? ` (${note})` : ''));
+  // distances: always measured from the camera centre, so planar or filtered depth passes don't matter from here on
+  for (let q = 0; q < n; q++) S.dist[q] = S.alpha[q] > 0.02 ? Math.hypot(S.P[q*3] - cam.C[0], S.P[q*3 + 1] - cam.C[1], S.P[q*3 + 2] - cam.C[2]) : 0;
+  // scene units: a header hint, else a guess from how far away things are (sets are metres or centimetres)
+  const uk = Object.keys(meta).find(k => /unit/i.test(k) && typeof meta[k] === 'string');
+  let units = 1;
+  if (uk && /cm|centi/i.test(meta[uk])) units = 0.01; else if (uk && /mm|milli/i.test(meta[uk])) units = 0.001;
+  else { const ds = []; for (let q = 0; q < n; q += 97) if (S.dist[q] > 0) ds.push(S.dist[q]); ds.sort((a, b) => a - b); if ((ds[ds.length >> 1] || 0) > 150) units = 0.01; }
+  const num = re => { const k = Object.keys(meta).find(kk => re.test(kk)); return k === undefined ? NaN : +numsOf(meta[k])[0]; };
+  const focal = [...Object.keys(meta)].map(k => /focal_?length$|^focal$/i.test(k) ? +numsOf(meta[k])[0] : NaN).find(v => v >= 4 && v <= 3000);
+  const fstop = num(/f_?stop$|fnumber|f_?number$/i), focus = num(/focus_?distance$/i);
+  return Object.assign(S, { name: files.map(f => f.name).join(' + '), aspect: W/H*(+meta.pixelAspectRatio || 1), units, cam,
+    meta: { focal: focal || null, fstop: fstop > 0.5 && fstop < 64 ? fstop : null, focusM: focus > 0 ? focus*units : null },
+    channels: found.join(', '), depthName });
+}
+/* ---- the shot on the GPU: the buffers as textures, lit by the flare lights into the plate the flare sits over ---- */
+const FS_SHOT = `#version 300 es
+precision highp float; precision highp int;
+out vec4 o;
+uniform sampler2D uGP, uGN, uGA, uGE;
+uniform int uNL; uniform vec4 uLP[4]; uniform vec3 uLCol[4]; uniform vec4 uLAx[4];
+uniform vec3 uC, uRt, uUp, uBk, uSky; uniform vec2 uTan; uniform float uUnit, uAmb, uShadow, uView;
+vec2 toPix(vec3 q, out float z){
+  vec3 v = q - uC; z = -dot(v, uBk);
+  vec2 ndc = vec2(dot(v, uRt)/(z*uTan.x), dot(v, uUp)/(z*uTan.y));
+  return (ndc*0.5 + 0.5)*vec2(textureSize(uGP, 0));
+}
+/* screen-space shadow: walk from the surface toward the light and look for something the camera saw in the way */
+float shadowTo(vec3 P, vec3 N, vec3 dir, float maxT, float seed){
+  if (uShadow < 0.5) return 1.0;
+  ivec2 sz = textureSize(uGP, 0);
+  float m = 1.0/uUnit, tmax = min(maxT, 45.0*m);
+  vec3 o0 = P + N*0.03*m;
+  for (int k = 0; k < 32; k++){
+    float t = tmax*pow((float(k) + seed)/32.0, 1.7) + 0.04*m;
+    if (t >= tmax) break;
+    vec3 q = o0 + dir*t; float z; vec2 px = toPix(q, z);
+    if (z <= 0.0 || px.x < 0.0 || px.y < 0.0 || px.x >= float(sz.x) || px.y >= float(sz.y)) continue;
+    float g = texelFetch(uGP, ivec2(px), 0).w;
+    if (g <= 0.0) continue;
+    float qd = length(q - uC), diff = qd - g;
+    if (diff > 0.015*qd + 0.04*m && diff < 1.2*m) return 0.0;
+  }
+  return 1.0;
+}
+void main(){
+  ivec2 px = ivec2(gl_FragCoord.xy);
+  vec4 gp = texelFetch(uGP, px, 0), gn = texelFetch(uGN, px, 0);
+  vec3 alb = texelFetch(uGA, px, 0).rgb, em = texelFetch(uGE, px, 0).rgb;
+  float a = clamp(gn.w, 0.0, 1.0);
+  vec2 uv = (vec2(px) + 0.5)/vec2(textureSize(uGP, 0));
+  vec3 sky = uSky*(0.5 + 0.9*uv.y);
+  if (uView > 0.5){
+    vec3 c = uView < 1.5 ? alb : uView < 2.5 ? gn.xyz*0.5 + 0.5 : vec3(gp.w > 0.0 ? 1.0/(1.0 + gp.w*uUnit*0.06) : 0.0);
+    o = vec4(c*a*0.6, 1.0); return;
+  }
+  if (a < 0.002){ o = vec4(sky, 1.0); return; }
+  vec3 P = gp.xyz, V = normalize(uC - P), N = gn.xyz;
+  if (dot(N, N) < 0.01) N = V;
+  if (dot(N, V) < 0.0) N = -N;
+  vec3 col = alb*uAmb*(0.55 + 0.45*N.y)*vec3(0.82, 0.9, 1.0);
+  float seed = fract(sin(dot(vec2(px), vec2(12.9898, 78.233)))*43758.5453);
+  for (int i = 0; i < 4; i++){
+    if (i >= uNL) break;
+    vec4 LP = uLP[i]; vec3 Ld; float att, maxT;
+    if (LP.w > 0.5){ vec3 v = LP.xyz - P; float d = length(v); Ld = v/max(d, 1e-6); float dm = d*uUnit; att = 1.0/max(dm*dm, 0.05); maxT = d; }
+    else { Ld = normalize(LP.xyz); att = 1.0; maxT = 1e9; }
+    float ndl = dot(N, Ld); if (ndl <= 0.0) continue;
+    float prof = 1.0;
+    if (uLAx[i].w > 0.0){ float ang = acos(clamp(dot(-Ld, uLAx[i].xyz), -1.0, 1.0)); prof = 0.015 + 0.985*exp(-pow(ang/uLAx[i].w, 2.0)); }
+    vec3 c0 = alb*uLCol[i]*ndl*att*prof;
+    col += max(c0.r, max(c0.g, c0.b)) < 0.002 ? c0 : c0*shadowTo(P, N, Ld, maxT, seed);   // faint spill needs no shadow
+  }
+  col += em;
+  o = vec4(mix(sky, col, a), 1.0);
+}`;
+/* how much light each kind of lamp throws on the scene, in plate units at one metre (the sun as an irradiance) */
+const SHOT_ILLUM = { sun: 3.5, moon: 0.02, led: 380, sodium: 130, followspot: 3000, filament: 5, flashlight: 45, xenon: 80, dedo: 220, mirror: 2.5 };
+const shotGL = { prog: null, tGP: null, tGN: null, tGA: null, tGE: null, rt: null, sig: '', dummy: null };
+function shotTex(internal, W, H, data){
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internal, W, H, 0, gl.RGBA, gl.FLOAT, data);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+}
+function shotDepthTex(){ if (SHOT.on && shotGL.tGP) return shotGL.tGP; if (!shotGL.dummy) shotGL.dummy = shotTex(gl.RGBA32F, 1, 1, new Float32Array(4)); return shotGL.dummy; }
+function shotUpload(S){
+  const W = S.W, H = S.H, n = W*H, gp = new Float32Array(n*4), gn = new Float32Array(n*4), ga = new Float32Array(n*4), ge = new Float32Array(n*4);
+  for (let j = 0; j < H; j++){
+    const jr = H - 1 - j;   // textures run bottom-up
+    for (let i = 0; i < W; i++){
+      const q = j*W + i, r = (jr*W + i)*4;
+      for (let k = 0; k < 3; k++){ gp[r + k] = S.P[q*3 + k]; gn[r + k] = S.N[q*3 + k]; ga[r + k] = Math.min(S.alb[q*3 + k], 60000); ge[r + k] = Math.min(S.emit[q*3 + k], 60000); }
+      gp[r + 3] = S.dist[q]; gn[r + 3] = S.alpha[q]; ga[r + 3] = 1; ge[r + 3] = 1;
+    }
+  }
+  for (const k of ['tGP', 'tGN', 'tGA', 'tGE']) if (shotGL[k]) gl.deleteTexture(shotGL[k]);
+  shotGL.tGP = shotTex(gl.RGBA32F, W, H, gp); shotGL.tGN = shotTex(gl.RGBA16F, W, H, gn);
+  shotGL.tGA = shotTex(gl.RGBA16F, W, H, ga); shotGL.tGE = shotTex(gl.RGBA16F, W, H, ge);
+  if (shotGL.rt){ gl.deleteTexture(shotGL.rt.t); gl.deleteFramebuffer(shotGL.rt.f); }
+  shotGL.rt = makeRT(W, H);
+  gl.bindTexture(gl.TEXTURE_2D, shotGL.rt.t); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  shotGL.sig = '';
+}
+const shotUnits = () => SHOT.units || (SHOT.S ? SHOT.S.units : 1);   // metres per scene unit
+const shotOn = () => SHOT.on && !!SHOT.S && state.scene === 'shot';
+/* the camera ray through a point of the frame (frame x spans +-aspect, y spans +-1) */
+function shotRay(x, y){
+  const c = SHOT.S.cam, u = x/SHOT.S.aspect;
+  return V3.norm([0, 1, 2].map(k => c.right[k]*u*c.tanH + c.up[k]*y*c.tanV - c.back[k]));
+}
+function shotLightPos(l){
+  const T = LIGHT_TYPES[l.type], r = shotRay(l.x, l.y);
+  if (!T.dref || !isFinite(l.dist)) return { dir: r };
+  const D = l.dist/shotUnits(), C = SHOT.S.cam.C;
+  return { p: [C[0] + r[0]*D, C[1] + r[1]*D, C[2] + r[2]*D] };
+}
+/* a light dragged onto something in the shot takes that surface's distance (just in front of it) */
+function shotSnap(l){
+  if (!shotOn() || !SHOT.snap || !l) return;
+  const T = LIGHT_TYPES[l.type]; if (!T.dref) return;
+  const S = SHOT.S, u = l.x/S.aspect*0.5 + 0.5, v = 0.5 - l.y*0.5;
+  if (u < 0 || u >= 1 || v < 0 || v >= 1) return;
+  const ci = Math.floor(u*S.W), cj = Math.floor(v*S.H), rr = Math.max(1, Math.round(S.W/400));
+  let best = Infinity;
+  for (let j = cj - rr; j <= cj + rr; j++) for (let i = ci - rr; i <= ci + rr; i++){
+    if (i < 0 || j < 0 || i >= S.W || j >= S.H) continue;
+    const q = j*S.W + i; if (S.alpha[q] > 0.5 && S.dist[q] > 0 && S.dist[q] < best) best = S.dist[q];
+  }
+  if (isFinite(best)) l.dist = clamp(best*shotUnits()*0.985, DIST_MIN, DIST_MIN*Math.pow(10, DIST_SPAN));
+}
+function shotShade(){
+  const S = SHOT.S, c = S.cam, um = shotUnits();
+  if (!shotGL.prog) shotGL.prog = program(VS_FULL, FS_SHOT);
+  const LP = new Float32Array(16), LC = new Float32Array(12), LA = new Float32Array(16), n = Math.min(4, state.lights.length);
+  for (let i = 0; i < n; i++){
+    const l = state.lights[i], T = LIGHT_TYPES[l.type], d = derived[i], pos = shotLightPos(l);
+    if (pos.dir) LP.set([pos.dir[0], pos.dir[1], pos.dir[2], 0], i*4); else LP.set([pos.p[0], pos.p[1], pos.p[2], 1], i*4);
+    const I = (SHOT_ILLUM[l.type] ?? 20)*Math.pow(2, l.ev || 0)*((l.jit && l.jit.f) || 1), col = d ? d.col : [1, 1, 1];
+    LC.set([col[0]*I, col[1]*I, col[2]*I], i*3);
+    if (T.beam && pos.p){
+      // the beam points 'aim' degrees away from the lens, tipped down (or up, for lamps aimed at the sky)
+      const toCam = V3.norm(V3.sub(c.C, pos.p)), ref = (l.dir ?? T.dir ?? -90) > 0 ? [0, 1, 0] : [0, -1, 0];
+      let perp = V3.sub(ref, V3.scale(toCam, V3.dot(ref, toCam))); if (V3.len(perp) < 1e-3) perp = c.right; perp = V3.norm(perp);
+      const a = (l.aim ?? T.aim ?? 0)*Math.PI/180, ax = V3.norm([0, 1, 2].map(k => toCam[k]*Math.cos(a) + perp[k]*Math.sin(a)));
+      LA.set([ax[0], ax[1], ax[2], T.beam*Math.PI/180], i*4);
+    }
+  }
+  const sig = [n, SHOT.ambient, { lit: 0, albedo: 1, normals: 2, depth: 3 }[SHOT.view] || 0, SHOT.shadows ? 1 : 0, um].concat(Array.from(LP), Array.from(LC), Array.from(LA)).map(v => +(+v).toPrecision(6)).join(',');
+  if (sig === shotGL.sig) return;
+  shotGL.sig = sig;
+  const pr = shotGL.prog; gl.useProgram(pr.p); target(shotGL.rt); gl.disable(gl.BLEND);
+  bindTex(0, shotGL.tGP); bindTex(1, shotGL.tGN); bindTex(2, shotGL.tGA); bindTex(3, shotGL.tGE);
+  gl.uniform1i(pr.u.uGP, 0); gl.uniform1i(pr.u.uGN, 1); gl.uniform1i(pr.u.uGA, 2); gl.uniform1i(pr.u.uGE, 3);
+  gl.uniform1i(pr.u.uNL, n); gl.uniform4fv(pr.u.uLP, LP); gl.uniform3fv(pr.u.uLCol, LC); gl.uniform4fv(pr.u.uLAx, LA);
+  gl.uniform3fv(pr.u.uC, c.C); gl.uniform3fv(pr.u.uRt, c.right); gl.uniform3fv(pr.u.uUp, c.up); gl.uniform3fv(pr.u.uBk, c.back);
+  gl.uniform2f(pr.u.uTan, c.tanH, c.tanV); gl.uniform1f(pr.u.uUnit, um); gl.uniform1f(pr.u.uAmb, SHOT.ambient);
+  gl.uniform3f(pr.u.uSky, 0.32*SHOT.ambient, 0.42*SHOT.ambient, 0.7*SHOT.ambient);
+  gl.uniform1f(pr.u.uShadow, SHOT.shadows ? 1 : 0); gl.uniform1f(pr.u.uView, { lit: 0, albedo: 1, normals: 2, depth: 3 }[SHOT.view] || 0);
+  full();
+  gl.bindTexture(gl.TEXTURE_2D, shotGL.rt.t); gl.generateMipmap(gl.TEXTURE_2D);
+}
+/* the visibility and emitter passes test each light against the shot's depth */
+function shotVisUniforms(pr){
+  const on = shotOn(), ld = new Float32Array(4);
+  if (on) state.lights.slice(0, 4).forEach((l, i) => { const T = LIGHT_TYPES[l.type]; ld[i] = T.dref && isFinite(l.dist) ? l.dist/shotUnits() : -1; });
+  bindTex(6, shotDepthTex()); gl.uniform1i(pr.u.uGP, 6);
+  gl.uniform1f(pr.u.uShot, on ? 1 : 0); gl.uniform1f(pr.u.uShotAsp, on ? SHOT.S.aspect : 1); gl.uniform1fv(pr.u.uLd, ld);
+}
+/* ---- loading a shot ---- */
+const shotInfo = t => { $('#shotInfo').textContent = t; };
+const ambToSlider = a => Math.round(100*Math.log(a/0.002)/Math.log(500)), sliderToAmb = v => 0.002*Math.pow(500, v/100);
+function syncShotUI2(){
+  const on = shotOn();
+  $('#shotCtl').hidden = !on;
+  if (on){
+    const S = SHOT.S, c = S.cam, um = shotUnits();
+    shotInfo(`${S.name} · ${S.W}×${S.H} · ${S.channels} · camera ${c.from}` + (S.meta.focal ? ` (${Math.round(S.meta.focal)} mm` + (S.meta.fstop ? `, f/${(+S.meta.fstop).toFixed(1)}` : '') + (S.meta.focusM ? `, focus ${fmtDist(S.meta.focusM)}` : '') + ')' : '') + '.');
+    $('#shotAmb').value = ambToSlider(SHOT.ambient); $('#shotAmbOut').textContent = SHOT.ambient < 0.02 ? 'Night' : SHOT.ambient < 0.15 ? 'Dusk' : SHOT.ambient < 0.5 ? 'Overcast' : 'Day';
+    $('#shotUnits').value = SHOT.units ? String(SHOT.units) : 'auto';
+    $('#shotUnits').querySelector('option[value="auto"]').textContent = `Auto (${({ 1: 'metres', 0.01: 'centimetres', 0.001: 'millimetres' })[S.units] || S.units + ' m'})`;
+    $('#shotView').value = SHOT.view; $('#shotSnap').checked = SHOT.snap; $('#shotShadow').checked = SHOT.shadows; $('#shotShow').checked = state.showSet;
+    $('#shotEV').value = state.plateEV; $('#shotEVOut').textContent = fmtEV(state.plateEV);
+  } else if (!SHOT.busy) shotInfo('Black. Load a render\'s utility pass (world position, normals and depth, plus surface colour if you have it) to see the flare in the shot, or try the example street.');
+}
+function useShot(S, kind, keepLights){
+  SHOT.S = S; SHOT.on = true; SHOT.kind = kind; SHOT.units = null; SHOT.busy = false;
+  SHOT.ambient = kind === 'example' ? 0.012 : 0.3;
+  shotUpload(S);
+  state.scene = 'shot'; state.shotKind = kind; state.showSet = true; state.plateEV = 0;
+  // the shot's camera: focal length, stop and focus from the metadata
+  if (S.meta.focal) state.focal = S.meta.focal;
+  if (S.meta.fstop){ const list = tStops(); let best = list[0]; for (const t of list) if (Math.abs(Math.log(t/S.meta.fstop)) < Math.abs(Math.log(best/S.meta.fstop))) best = t; state.t = best; }
+  if (S.meta.focusM){ state.autoFocus = false; $('#autoFocus').checked = false; setFocus(S.meta.focusM); }
+  if (!keepLights && S.lights){
+    state.lights = S.lights.slice(0, 4).map(o => { const l = mkLight(o.type, o.x, o.y); l.dist = o.dist; return l; });
+    state.sel = 0;
+  } else state.lights.forEach(shotSnap);
+  cam.x = 0; cam.y = 0;
+  layout(); onLensChange(); syncIris(); syncFocal(); syncHandles(); renderLightPanel(); syncShotUI2(); placeHandles();
+  needsFrame = true;
+}
+function loadExampleShot(keepLights){
+  SHOT.busy = true; shotInfo('Building the example street…');
+  setTimeout(() => { try { useShot(makeExampleStreet(1280, 692), 'example', keepLights); } catch (e){ console.error(e); SHOT.busy = false; shotInfo('Could not build the example: ' + e.message); } }, 30);
+}
+async function loadShotFiles(files){
+  SHOT.busy = true; shotInfo('Reading ' + files.map(f => f.name).join(' + ') + '…');
+  try {
+    const bufs = await Promise.all(files.map(async f => ({ name: f.name, buf: await f.arrayBuffer() })));
+    useShot(await shotFromEXRs(bufs), 'file', true);
+  } catch (e){ console.error(e); SHOT.busy = false; shotInfo('Could not use that: ' + e.message + '.'); }
+}
+function clearShot(){ SHOT.on = false; SHOT.S = null; state.scene = 'black'; state.shotKind = ''; state.focal = null; layout(); onLensChange(); syncFocal(); syncHandles(); renderLightPanel(); syncShotUI2(); placeHandles(); needsFrame = true; }
+$('#loadShot').addEventListener('click', () => $('#shotFile').click());
+$('#shotFile').addEventListener('change', e => { const fs = [...(e.target.files || [])]; if (fs.length) loadShotFiles(fs); e.target.value = ''; });
+$('#exampleShot').addEventListener('click', () => loadExampleShot(false));
+$('#clearShot').addEventListener('click', clearShot);
+$('#shotAmb').addEventListener('input', e => { SHOT.ambient = sliderToAmb(+e.target.value); syncShotUI2(); needsFrame = true; });
+$('#shotEV').addEventListener('input', e => { state.plateEV = +e.target.value; $('#shotEVOut').textContent = fmtEV(state.plateEV); needsFrame = true; });
+$('#shotUnits').addEventListener('change', e => { SHOT.units = e.target.value === 'auto' ? null : +e.target.value; state.lights.forEach(shotSnap); syncShotUI2(); renderLightPanel(); needsFrame = true; });
+$('#shotView').addEventListener('change', e => { SHOT.view = e.target.value; needsFrame = true; });
+$('#shotSnap').addEventListener('change', e => { SHOT.snap = e.target.checked; });
+$('#shotShadow').addEventListener('change', e => { SHOT.shadows = e.target.checked; needsFrame = true; });
+$('#shotShow').addEventListener('change', e => { state.showSet = e.target.checked; const p = $('#showSet'); if (p) p.checked = state.showSet; needsFrame = true; });
+syncShotUI2();
+
 /* ---- before / after wipe ---- */
 function syncWipe(){ $('#wipe').hidden = !state.compare; $('#wipe').style.left = (state.split*100) + '%'; $('#compare').checked = state.compare; }
 $('#compare').addEventListener('change', e => { state.compare = e.target.checked; syncWipe(); });
@@ -3894,7 +4673,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 41;
+const APP_VERSION = 43;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
@@ -3960,7 +4739,14 @@ function applyLook(o){
   if (o.cam){ cam.x = o.cam.x; cam.y = o.cam.y; }
   if (typeof o.time === 'number') t0 = performance.now() - o.time*1000;
   flickHist.clear();   // same moment of the handheld move or flicker
-  const done = () => { if (!SCENES[state.scene]) state.scene = 'black'; syncAllUI(); };
+  const done = () => {
+    if (!SCENES[state.scene]) state.scene = 'black';
+    if (state.scene === 'shot' && !(SHOT.on && SHOT.S)){
+      if (state.shotKind === 'example'){ loadExampleShot(true); }
+      else { state.scene = 'black'; setTimeout(() => shotInfo('This look was made over a loaded utility pass: load it again to see the shot.'), 0); }
+    }
+    syncAllUI();
+  };
   if (o.yourShot && o.yourShot.rgbe){
     try { const bin = atob(o.yourShot.rgbe), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
       setPlate(parseHDR(buf.buffer), o.yourShot.name || 'plate', o.yourShot.hdr !== false); state.scene = st.scene || 'custom'; } catch (e){ console.error(e); }
