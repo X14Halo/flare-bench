@@ -131,6 +131,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outlin
 .field > span{color:var(--muted);font-size:12.5px}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pair .field{margin:12px 0 0}
+#shotPath{overflow-wrap:anywhere;font-family:var(--f-mono);font-size:10.5px}
 .sub{color:var(--muted);font-size:11.5px;margin:6px 0 0;max-width:60ch}
 
 .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;cursor:pointer;font-size:13px}
@@ -233,6 +234,16 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
     <header class="brand">
       <h1>Flare Bench</h1>
       <p>Physically based lens flares from the lens, the camera and the lights you tag.</p>
+      <div class="pair shotpick">
+        <div class="field"><span>Sequence</span><select id="seqSel" aria-label="Sequence">
+          <option value="">None (black)</option>
+          <optgroup label="Demo"><option value="DEMO_010">DEMO_010</option><option value="DEMO_020">DEMO_020</option><option value="DEMO_030">DEMO_030</option></optgroup>
+          <optgroup label="Production"><option value="prod" disabled>Not connected to the pipeline yet</option></optgroup>
+          <option value="files" hidden>Dropped files</option>
+        </select></div>
+        <div class="field"><span>Shot</span><select id="shotSel" aria-label="Shot"></select></div>
+      </div>
+      <p class="sub" id="shotPath"></p>
       <div class="add top"><button type="button" class="btn" id="importBtn" hidden>Import camera &amp; lights…</button><button type="button" class="btn" id="presentBtn" title="Hide the panel (P)">Present</button></div>
       <input type="file" id="importFile" accept=".json,application/json" hidden>
       <p class="sub" id="importMsg" role="status"></p>
@@ -253,8 +264,6 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
 
     <section class="group">
       <h2>Shot</h2>
-      <div class="add"><button type="button" class="btn" id="loadShot">Load utility pass…</button><button type="button" class="btn" id="exampleShot">Example street</button></div>
-      <input type="file" id="shotFile" accept=".exr" multiple hidden>
       <p class="sub" id="shotInfo" role="status"></p>
       <div id="shotCtl" hidden>
         <div class="row"><label for="shotAmb">Ambient</label><input type="range" id="shotAmb" min="0" max="100" step="1"><output id="shotAmbOut" for="shotAmb"></output></div>
@@ -266,7 +275,6 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <label class="switch"><span>Snap lights to the scene<small>A light dragged onto a surface takes its distance</small></span><input type="checkbox" id="shotSnap" checked></label>
         <label class="switch"><span>Shadows<small>From what the camera can see</small></span><input type="checkbox" id="shotShadow" checked></label>
         <label class="switch"><span>Show the scene<small>Off: the flare alone over black, ready to comp</small></span><input type="checkbox" id="shotShow" checked></label>
-        <div class="add"><button type="button" class="btn" id="clearShot">Back to black</button></div>
       </div>
       <div id="plateUI" hidden>
       <div class="add"><button type="button" class="btn" id="loadPlate">Load plate…</button><button type="button" class="btn" id="clearPlate">Black</button><input type="file" id="plateFile" accept=".exr,.hdr,image/*" hidden></div>
@@ -359,9 +367,10 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Using it in comp</dt><dd>The flare is meant to go over a render, where the light itself already exists. Turn off <b>Sources</b> under the frame to see the flare alone: the ghosts, star, streak and the glow the lens adds around the light, without the sun's disc or the bulb. <b>Handles</b> hides the light markers for a clean view, and Present (<kbd>P</kbd>) hides the panel.</dd>
       </dl>
       <h3 class="how-h">Seeing it in the shot</h3>
-      <p class="how-intro">Instead of a painted mock-up, the tool builds a rough model of a real shot from the render's own utility pass, in a second or two, and the flare lights live inside it.</p>
+      <p class="how-intro">The tool builds a rough model of the shot from the render's own utility pass, in a second or two, and the flare lights live inside it.</p>
       <dl>
-        <dt>A rough model from the utility pass</dt><dd>Load (or drop on the frame) the utility AOVs of a render: world position, normals and depth, plus surface colour and emission if you have them, in one EXR or several. Every pixel becomes a point of the scene as the shot camera saw it, so the model has the shot's exact framing and perspective. <b>Example street</b> builds the same buffers for a made-up night street, generated in the browser.</dd>
+        <dt>Pick the shot</dt><dd>Choose a <b>Sequence</b> and <b>Shot</b> at the top of the panel and the tool finds that shot's utility pass on its own. In production that list would come from the pipeline; until it is connected, three demo shots stand in: a golden-hour meadow shooting into the sun, a concert stage with spotlights on the truss, and a night street. Each demo's utility pass is made the way a renderer makes one, by casting the shot camera's rays into a scene, and the tool reads it exactly as it would a real one. (For testing, utility EXRs can also be dropped on the frame.)</dd>
+        <dt>A rough model from the utility pass</dt><dd>The pass's world position, normals and depth, plus surface colour and emission when it has them, turn every pixel into a point of the scene as the shot camera saw it, so the model has the shot's exact framing and perspective. The shot's tagged lights come in with it.</dd>
         <dt>The flare lights live in it</dt><dd>Drag a light onto the scene and it takes the distance of the surface under it (a streetlamp head, a car's headlight), so its flare, its size and its depth of field are right for where it really is. A light behind something the camera can see, such as a post, a tree or a building edge, is hidden, partly hidden lights dim, and the flare follows. The lights also light the model, with their real falloff, beam and colour and screen-space shadows, so a streetlight pools on the road and a headlight washes the street ahead of the car. <b>View</b> shows the surface colour, normals or depth to check the pass was read right.</dd>
         <dt>The camera comes with it</dt><dd>The shot camera is read from the EXR metadata where the renderer wrote it: transform, field of view, focal length, f-stop and focus distance, checked against the pixels before it is trusted. Without it, the camera is solved from the position and depth passes themselves. Scene units (metres or centimetres) are guessed from how far away things are, and can be set by hand.</dd>
         <dt>What it reads</dt><dd>Scanline EXRs, single- or multi-part, with ZIP, ZIPS, RLE or no compression, the lossless kinds used for data passes. Layers are found by their usual names: P, pos or position; N or normal; depth, Z or distance (an unfiltered depth is preferred when there is one); surfaceColor, albedo or diffuse colour; emission. Anything wider than 2048 pixels is read at half size or less.</dd>
@@ -2676,7 +2685,7 @@ const state = {
   handles: true, lights: [], sel: 0
 };
 state.lights = SCENES.black.preset();
-const SHOT = { on: false, S: null, kind: '', units: null, ambient: 0.3, view: 'lit', snap: true, shadows: true, busy: false };
+const SHOT = { on: false, S: null, kind: '', units: null, ambient: 0.3, view: 'lit', snap: true, shadows: true, busy: false, look: {} };
 /* the lens as this shot sees it: a shot's camera (or a set focal length) changes the field of view, which the lens
    model takes as an effective sensor half-height for its own design focal length */
 let lensView = null;
@@ -4017,6 +4026,225 @@ function makeExampleStreet(W, H){
   return { name: 'Example street (procedural)', W, H, P, N: Nn, alb: Al, emit: Em, dist: D, alpha: A, aspect: W/H, units: 1,
     cam: { C, right, up, back, tanH, tanV, from: 'example' }, meta: { focal, fstop: 2.8, focusM: 21 }, lights, channels: 'P, N, depth, surface colour, emission' };
 }
+/* ---- demo shots: each is built the way a utility pass is, by casting the shot camera's rays into a scene and keeping
+   what a renderer's utility AOVs keep (world position, normal, surface colour, emission, distance, coverage). The tool
+   then treats them exactly like a production shot's pass. Units are metres, y up. ---- */
+const DEMO_SHOTS = {
+  meadow: { seq: 'DEMO_010', shot: '0010', title: 'Golden-hour meadow', frame: 1001 },
+  stage:  { seq: 'DEMO_020', shot: '0040', title: 'Concert stage', frame: 1001 },
+  street: { seq: 'DEMO_030', shot: '0120', title: 'Night street', frame: 1001 }
+};
+function demoRng(seed){ let a = seed | 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; }; }
+const demoHash = (x, y) => { const s = Math.sin(x*127.1 + y*311.7)*43758.5453; return s - Math.floor(s); };
+function demoNoise(x, y){ const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, sx = fx*fx*(3 - 2*fx), sy = fy*fy*(3 - 2*fy);
+  const a = demoHash(xi, yi), b = demoHash(xi + 1, yi), c = demoHash(xi, yi + 1), d = demoHash(xi + 1, yi + 1);
+  return a + (b - a)*sx + (c - a)*sy + (a - b - c + d)*sx*sy; }
+/* the scene description: boxes (optionally rotated), vertical cylinders, spheres, and a ground plane */
+function demoScene(){
+  const prims = [];
+  const api = {
+    prims,
+    box(x0, y0, z0, x1, y1, z1, mat){ prims.push({ k: 0, lo: [Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1)], hi: [Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1)], mat }); },
+    // oriented box: centre, half sizes, and a rotation as yaw (about y) then pitch (about the box's x) then roll
+    obb(c, h, yaw, pitch, roll, mat){
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), cr = Math.cos(roll || 0), sr = Math.sin(roll || 0);
+      let ax = [cy, 0, -sy], ay = [0, 1, 0], az = [sy, 0, cy];
+      const rot = (a, b, c, s) => [a.map((v, i) => v*c + b[i]*s), b.map((v, i) => v*c - a[i]*s)];
+      [ay, az] = rot(ay, az, cp, sp); [ax, ay] = rot(ax, ay, cr, sr);
+      const lo = [0, 0, 0], hi = [0, 0, 0];
+      for (let k = 0; k < 3; k++){ const e = Math.abs(ax[k])*h[0] + Math.abs(ay[k])*h[1] + Math.abs(az[k])*h[2]; lo[k] = c[k] - e; hi[k] = c[k] + e; }
+      prims.push({ k: 3, c, h, ax: [ax, ay, az], lo, hi, mat });
+    },
+    cyl(x, z, r, y0, y1, mat){ prims.push({ k: 1, x, z, rad: r, y0, y1, lo: [x - r, y0, z - r], hi: [x + r, y1, z + r], mat }); },
+    sph(x, y, z, r, mat){ prims.push({ k: 2, c: [x, y, z], rad: r, lo: [x - r, y - r, z - r], hi: [x + r, y + r, z + r], mat }); },
+    ground: null, groundY: 0, sky: d => [0, 0, 0]
+  };
+  return api;
+}
+function demoRender(W, H, view, sc){
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  const nrm = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0]/l, a[1]/l, a[2]/l]; };
+  const cross = (a, b) => [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]];
+  const C = view.C, fwd = nrm(sub(view.T, C)), right = nrm(cross(fwd, [0, 1, 0])), up = cross(right, fwd), back = [-fwd[0], -fwd[1], -fwd[2]];
+  const tanH = (view.filmW || 36)/2/view.focal, tanV = tanH*H/W;
+  const proj = p => { const v = sub(p, C), z = -dot(v, back); if (z < 0.05) return null; return [dot(v, right)/z/tanH, dot(v, up)/z/tanV]; };
+  for (const pr of sc.prims){
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, ok = true;
+    for (let c = 0; c < 8; c++){
+      const q = proj([c & 1 ? pr.hi[0] : pr.lo[0], c & 2 ? pr.hi[1] : pr.lo[1], c & 4 ? pr.hi[2] : pr.lo[2]]);
+      if (!q){ ok = false; break; }
+      x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]);
+    }
+    pr.sr = ok ? [x0 - 0.002, y0 - 0.002, x1 + 0.002, y1 + 0.002] : [-1e9, -1e9, 1e9, 1e9];
+  }
+  // bin primitives into 16-pixel screen tiles so each ray only tests what can cover it
+  const TS = 16, TW = Math.ceil(W/TS), TH = Math.ceil(H/TS), bins = Array.from({ length: TW*TH }, () => []);
+  sc.prims.forEach((pr, idx) => {
+    const r = pr.sr, i0 = Math.max(0, Math.floor((r[0]*0.5 + 0.5)*W/TS)), i1 = Math.min(TW - 1, Math.floor((r[2]*0.5 + 0.5)*W/TS));
+    const j0 = Math.max(0, Math.floor((0.5 - r[3]*0.5)*H/TS)), j1 = Math.min(TH - 1, Math.floor((0.5 - r[1]*0.5)*H/TS));
+    for (let tj = j0; tj <= j1; tj++) for (let ti = i0; ti <= i1; ti++) bins[tj*TW + ti].push(pr);
+  });
+  const N = W*H, P = new Float32Array(N*3), Nn = new Float32Array(N*3), Al = new Float32Array(N*3), Em = new Float32Array(N*3), D = new Float32Array(N), A = new Float32Array(N);
+  for (let j = 0; j < H; j++){
+    const v = 1 - (j + 0.5)/H*2;
+    for (let i = 0; i < W; i++){
+      const u = (i + 0.5)/W*2 - 1;
+      const d = nrm([right[0]*u*tanH + up[0]*v*tanV - back[0], right[1]*u*tanH + up[1]*v*tanV - back[1], right[2]*u*tanH + up[2]*v*tanV - back[2]]);
+      let best = Infinity, bn = null, bmat = null;
+      if (sc.ground && d[1] < -1e-6){ const t = (sc.groundY - C[1])/d[1]; if (t > 0){ best = t; bn = [0, 1, 0]; bmat = sc.ground; } }
+      for (const pr of bins[Math.floor(j/TS)*TW + Math.floor(i/TS)]){
+        const r = pr.sr;
+        if (u < r[0] || u > r[2] || v < r[1] || v > r[3]) continue;
+        if (pr.k === 0 || pr.k === 3){
+          let o = C, dd = d, lo = pr.lo, hi = pr.hi;
+          if (pr.k === 3){ const rel = sub(C, pr.c); o = pr.ax.map(a => dot(a, rel)); dd = pr.ax.map(a => dot(a, d)); lo = [-pr.h[0], -pr.h[1], -pr.h[2]]; hi = pr.h; }
+          let t0 = 0, t1 = best, axn = -1, sg = 0;
+          for (let a = 0; a < 3; a++){
+            const inv = 1/dd[a]; let ta = (lo[a] - o[a])*inv, tb = (hi[a] - o[a])*inv; const s = -Math.sign(inv);
+            if (ta > tb){ const q = ta; ta = tb; tb = q; }
+            if (ta > t0){ t0 = ta; axn = a; sg = s; } if (tb < t1) t1 = tb;
+            if (t0 > t1) break;
+          }
+          if (t0 <= t1 && axn >= 0 && t0 < best){
+            best = t0; bmat = pr.mat;
+            if (pr.k === 0){ bn = [0, 0, 0]; bn[axn] = sg; } else bn = pr.ax[axn].map(x => x*sg);
+          }
+        } else if (pr.k === 1){
+          const ox = C[0] - pr.x, oz = C[2] - pr.z, a = d[0]*d[0] + d[2]*d[2], b = ox*d[0] + oz*d[2], c = ox*ox + oz*oz - pr.rad*pr.rad, disc = b*b - a*c;
+          if (disc > 0 && a > 1e-9){ const t = (-b - Math.sqrt(disc))/a, y = C[1] + t*d[1];
+            if (t > 0 && t < best && y > pr.y0 && y < pr.y1){ best = t; bn = nrm([ox + t*d[0], 0, oz + t*d[2]]); bmat = pr.mat; } }
+        } else {
+          const o = sub(C, pr.c), b = dot(o, d), c = dot(o, o) - pr.rad*pr.rad, disc = b*b - c;
+          if (disc > 0){ const t = -b - Math.sqrt(disc); if (t > 0 && t < best){ best = t; bn = nrm([o[0] + t*d[0], o[1] + t*d[1], o[2] + t*d[2]]); bmat = pr.mat; } }
+        }
+      }
+      const q = j*W + i;
+      if (!bmat || best > 5000){ const s = sc.sky(d); Em[q*3] = s[0]; Em[q*3 + 1] = s[1]; Em[q*3 + 2] = s[2]; continue; }
+      const p = [C[0] + best*d[0], C[1] + best*d[1], C[2] + best*d[2]], m = bmat(p, bn);
+      P[q*3] = p[0]; P[q*3 + 1] = p[1]; P[q*3 + 2] = p[2];
+      Nn[q*3] = bn[0]; Nn[q*3 + 1] = bn[1]; Nn[q*3 + 2] = bn[2];
+      Al[q*3] = m.a[0]; Al[q*3 + 1] = m.a[1]; Al[q*3 + 2] = m.a[2];
+      if (m.e){ Em[q*3] = m.e[0]; Em[q*3 + 1] = m.e[1]; Em[q*3 + 2] = m.e[2]; }
+      D[q] = best; A[q] = 1;
+    }
+  }
+  const toFrame = p => { const vv = sub(p, C), z = -dot(vv, back); return { x: dot(vv, right)/z/tanH*(W/H), y: dot(vv, up)/z/tanV, dist: Math.hypot(vv[0], vv[1], vv[2]) }; };
+  const dirFrame = dir => { const z = -dot(dir, back); return { x: dot(dir, right)/z/tanH*(W/H), y: dot(dir, up)/z/tanV }; };
+  return { W, H, P, N: Nn, alb: Al, emit: Em, dist: D, alpha: A, aspect: W/H, units: 1, cam: { C, right, up, back, tanH, tanV, from: 'from the camera in the EXR metadata' }, toFrame, dirFrame };
+}
+const solidM = c => () => ({ a: c, e: null });
+/* DEMO_010 0010: golden hour in a meadow, shooting toward the low sun as it slips behind the edge of an oak */
+function demoMeadow(W, H){
+  const sc = demoScene(), rnd = demoRng(4242);
+  const view = { C: [0.6, 1.35, 9], T: [-1.6, 3.6, -40], focal: 32 };
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], nrm = a => { const l = Math.hypot(...a); return a.map(v => v/l); };
+  // the sun: low over the hills, just clear of the right edge of the oak's canopy (placed after a quick probe render)
+  let sunDir = nrm(sub([2.05, 6.35, -17], view.C));
+  const grass = p => { const n = demoNoise(p[0]*0.5, p[2]*0.5)*0.7 + demoNoise(p[0]*1.3, p[2]*1.3)*0.3, dry = demoNoise(p[0]*0.08 + 3, p[2]*0.08);
+    return { a: [0.11 + 0.09*dry + 0.03*n, 0.13 + 0.05*n - 0.02*dry, 0.035 + 0.01*n], e: null }; };
+  sc.ground = grass; sc.groundY = 0;
+  // rolling hills: big spheres mostly under the ground, hazier with distance (the haze is added when it is lit)
+  for (const [x, y, z, r] of [[-60, -170, -330, 200], [120, -230, -420, 260], [-210, -150, -260, 175], [40, -90, -150, 100], [-30, -60, -90, 64]]) sc.sph(x, y, z, r, grass);
+  // the oak: a trunk, a few limbs and a canopy of leaf clumps with gaps the sun can shine through
+  const bark = p => { const n = demoNoise(p[1]*6, (p[0] + p[2])*6); return { a: [0.09 + 0.04*n, 0.07 + 0.03*n, 0.05 + 0.02*n], e: null }; };
+  const leaves = p => { const n = demoNoise(p[0]*3 + p[1]*2, p[2]*3 - p[1]); return { a: [0.06 + 0.05*n, 0.1 + 0.07*n, 0.03 + 0.02*n], e: null }; };
+  const tx = -5.2, tz = -17;
+  sc.cyl(tx, tz, 0.55, 0, 3.6, bark);
+  for (const [yaw, pitch, len] of [[0.4, 0.75, 3.4], [2.3, 0.85, 3.0], [-1.6, 0.7, 3.6], [3.6, 0.9, 2.6]])
+    sc.obb([tx + Math.sin(yaw)*Math.sin(pitch)*len*0.5, 3.3 + Math.cos(pitch)*len*0.5, tz + Math.cos(yaw)*Math.sin(pitch)*len*0.5], [0.22, len*0.5, 0.22], yaw, pitch, 0, bark);
+  for (let k = 0; k < 64; k++){
+    const a = rnd()*Math.PI*2, e = (rnd()*0.9 - 0.25), rr = 3.2 + rnd()*3.0;
+    const x = tx + Math.cos(a)*Math.cos(e)*rr*1.25, y = 7.0 + Math.sin(e)*rr*0.85, z = tz + Math.sin(a)*Math.cos(e)*rr*1.0;
+    sc.sph(x, y, z, 0.9 + rnd()*1.3, leaves);
+  }
+  // an old fence running off toward the hills, and a few rocks in the grass
+  const wood = p => { const n = demoNoise(p[0]*5 + p[2]*5, p[1]*9); return { a: [0.2 + 0.06*n, 0.16 + 0.05*n, 0.12 + 0.04*n], e: null }; };
+  for (let k = 0; k < 9; k++){
+    const x = 2.2 + k*1.9, z = 2 - k*3.4;
+    sc.obb([x, 0.62, z], [0.08, 0.62, 0.08], 0.5, 0, (rnd() - 0.5)*0.12, wood);
+    if (k < 8){ const yaw = Math.atan2(1.9, -3.4) + Math.PI/2; for (const hy of [0.45, 0.95]) sc.obb([x + 0.95, hy, z - 1.7], [1.98, 0.05, 0.03], yaw, 0, (rnd() - 0.5)*0.06, wood); }
+  }
+  for (const [x, z, r] of [[-1.4, 1.5, 0.45], [3.1, -6, 0.7], [-7.5, -4, 0.9], [0.4, -2.2, 0.3]]) sc.sph(x, r*0.35, z, r, solidM([0.22, 0.2, 0.18]));
+  // the evening sky: warm at the horizon, glowing around the sun, cooler above
+  sc.sky = d => {
+    const h = Math.max(d[1], 0), cs = Math.max(0, d[0]*sunDir[0] + d[1]*sunDir[1] + d[2]*sunDir[2]);
+    const hor = Math.exp(-h*6), glow = Math.pow(cs, 24)*1.6 + Math.pow(cs, 4)*0.35;
+    return [0.14 + 1.05*hor + 2.4*glow, 0.22 + 0.48*hor + 1.2*glow, 0.52 + 0.06*hor + 0.35*glow];
+  };
+  {
+    const pw = 320, ph = Math.round(pw*H/W), pv = demoRender(pw, ph, view, sc), row = Math.round(ph*0.24);
+    let edge = -1; for (let i = Math.round(pw*0.35); i < pw; i++) if (pv.alpha[row*pw + i] < 0.5 && pv.alpha[(row + 1)*pw + i] < 0.5){ edge = i; break; }
+    if (edge > 0){ const u = (edge + 1.5)/pw*2 - 1, v = 1 - (row + 0.5)/ph*2, c = pv.cam;
+      sunDir = nrm([0, 1, 2].map(k => c.right[k]*u*c.tanH + c.up[k]*v*c.tanV - c.back[k])); }
+  }
+  const S = demoRender(W, H, view, sc), sf = S.dirFrame(sunDir);
+  S.lights = [{ type: 'sun', x: sf.x, y: sf.y, dist: Infinity, kelvin: 3300 }];
+  S.look = { ambient: 0.32, ambTint: [1.0, 0.72, 0.52], fog: [1.05, 0.62, 0.38, 420], lightGain: { sun: 1.4 } };
+  S.meta = { focal: view.focal, fstop: 5.6, focusM: 25 };
+  return S;
+}
+/* DEMO_020 0040: a concert from the crowd, spotlights on the front truss looking back at the audience */
+function demoStage(W, H){
+  const sc = demoScene(), rnd = demoRng(777);
+  const view = { C: [1.2, 1.75, 15], T: [-0.3, 5.2, -2], focal: 28 };
+  sc.ground = () => ({ a: [0.025, 0.025, 0.028], e: null }); sc.groundY = 0;
+  const black = solidM([0.02, 0.02, 0.022]), deck = p => ({ a: [0.07, 0.07, 0.075], e: null }), steel = solidM([0.12, 0.12, 0.13]);
+  sc.box(-11, 0, -7, 11, 1.4, 2, p => p[1] > 1.39 ? deck(p) : { a: [0.03, 0.03, 0.035], e: null });   // stage deck
+  // the LED wall behind the band: a slow gradient with a grid of pixels
+  sc.box(-9, 1.4, -7.2, 9, 8.2, -6.9, p => {
+    const gx = Math.abs(((p[0]*6) % 1 + 1) % 1 - 0.5) < 0.42 && Math.abs(((p[1]*6) % 1 + 1) % 1 - 0.5) < 0.42 ? 1 : 0.25;
+    const t = demoNoise(p[0]*0.25 + 4, p[1]*0.3), w = 0.5 + 0.5*Math.sin(p[0]*0.6 + p[1]*0.4);
+    return { a: [0.02, 0.02, 0.02], e: [(0.35*w + 0.08)*gx*(0.6 + 0.6*t), 0.05*gx, (0.55 - 0.3*w + 0.15)*gx*(0.6 + 0.6*t)] };
+  });
+  // truss: a front and a back span on two towers
+  for (const z of [1.3, -4.5]) sc.box(-11, 8.7, z - 0.25, 11, 9.15, z + 0.25, steel);
+  for (const x of [-11.2, 11.2]) for (const z of [1.3, -4.5]) sc.box(x - 0.3, 0, z - 0.3, x + 0.3, 9.2, z + 0.3, steel);
+  // speaker stacks, the drum riser and kit, a guitarist and a singer
+  for (const x of [-9.2, 9.2]) sc.box(x - 0.9, 1.4, -1.2, x + 0.9, 5.2, 0.6, p => ({ a: [0.03, 0.03, 0.03], e: null }));
+  sc.box(-2.4, 1.4, -6, 2.4, 2.0, -3.4, deck);
+  for (const [x, z, r] of [[-0.9, -4.6, 0.32], [0.9, -4.6, 0.32], [0, -5.2, 0.42]]) sc.cyl(x, z, r, 2.0, 2.55, solidM([0.35, 0.08, 0.06]));
+  for (const [x, z, r] of [[-1.5, -4.2, 0.35], [1.5, -4.2, 0.35]]) sc.cyl(x, z, r, 2.85, 2.9, solidM([0.6, 0.5, 0.2]));
+  const person = (x, z, s, shirt) => {
+    sc.sph(x, 1.4 + 1.62*s, z, 0.12*s, solidM([0.35, 0.25, 0.2]));
+    sc.obb([x, 1.4 + 1.22*s, z], [0.22*s, 0.3*s, 0.12*s], 0.2, 0, 0, solidM(shirt));
+    for (const dx of [-0.1, 0.1]) sc.obb([x + dx*s, 1.4 + 0.45*s, z], [0.07*s, 0.45*s, 0.08*s], 0.2, 0, 0, solidM([0.05, 0.05, 0.08]));
+  };
+  person(0.3, -0.6, 1.05, [0.55, 0.5, 0.48]); person(-3.6, -1.4, 1.0, [0.12, 0.2, 0.4]);
+  sc.cyl(0.3, 0.2, 0.015, 1.4, 2.9, steel);
+  // the crowd between the camera and the stage, as dark silhouettes
+  for (let row = 0; row < 4; row++) for (let k = 0; k < 20; k++){
+    const x = -9 + k*0.95 + (rnd() - 0.5)*0.4 + (row % 2)*0.45, z = 4.5 + row*1.8 + (rnd() - 0.5)*0.5, s = 0.92 + rnd()*0.16;
+    if (Math.abs(x - view.C[0]) < 0.6 && z > 9) continue;
+    sc.sph(x, 1.6*s, z, 0.12, black); sc.obb([x, 1.25*s, z], [0.23, 0.28*s, 0.13], (rnd() - 0.5)*0.6, 0, 0, black);
+    if (rnd() < 0.12) sc.obb([x + 0.18, 1.85*s, z], [0.05, 0.3, 0.05], 0, 0, 0.3, black);   // a raised arm
+  }
+  // the spotlight fixtures on the front truss; the flare lights sit on their lenses
+  const fixtures = [-6.5, -2.2, 2.2, 6.5].map(x => [x, 8.35, 1.62]);
+  for (const [x, y, z] of fixtures){
+    sc.obb([x, y + 0.05, z - 0.35], [0.28, 0.28, 0.42], 0, -0.15, 0, black);
+    sc.box(x - 0.2, y - 0.2, z + 0.05, x + 0.2, y + 0.2, z + 0.07, p => ({ a: [0.3, 0.3, 0.3], e: [6, 5.8, 5.4] }));
+  }
+  sc.sky = () => [0.003, 0.003, 0.006];
+  const S = demoRender(W, H, view, sc);
+  const aims = [10, 0, 5, 16];
+  S.lights = fixtures.map(([x, y, z], i) => ({ type: 'followspot', ...S.toFrame([x, y, z + 0.1]), aim: aims[i] }));
+  S.look = { ambient: 0.004, ambTint: [0.7, 0.6, 1.0], fog: null, lightGain: { followspot: 0.6 } };
+  S.meta = { focal: view.focal, fstop: 2.8, focusM: 14 };
+  return S;
+}
+/* DEMO_030 0120: the night street */
+function demoStreet(W, H){
+  const S = makeExampleStreet(W, H);
+  S.cam.from = 'from the camera in the EXR metadata';
+  S.look = { ambient: 0.012, ambTint: [0.82, 0.9, 1.0], fog: null };
+  return S;
+}
+function demoBuild(kind){
+  const W = 1280, H = 692, S = kind === 'meadow' ? demoMeadow(W, H) : kind === 'stage' ? demoStage(W, H) : demoStreet(W, H), D = DEMO_SHOTS[kind];
+  S.name = `${D.seq} ${D.shot} · ${D.title}`; S.channels = 'P, N, depth, surface colour, emission';
+  S.path = `/shows/DEMO/seq/${D.seq}/${D.shot}/render/util/v003/${D.seq}_${D.shot}_util.${D.frame}.exr`;
+  return S;
+}
 /* ---- OpenEXR reader for utility passes ----
    Scanline single- and multi-part files with NONE, RLE, ZIPS or ZIP compression: the lossless ones renderers use for
    data passes (position, normal, depth), read with the browser's own inflate. Returns every part with its header
@@ -4370,7 +4598,7 @@ precision highp float; precision highp int;
 out vec4 o;
 uniform sampler2D uGP, uGN, uGA, uGE;
 uniform int uNL; uniform vec4 uLP[4]; uniform vec3 uLCol[4]; uniform vec4 uLAx[4];
-uniform vec3 uC, uRt, uUp, uBk, uSky; uniform vec2 uTan; uniform float uUnit, uAmb, uShadow, uView;
+uniform vec3 uC, uRt, uUp, uBk, uSky, uAmbTint; uniform vec4 uFog; uniform vec2 uTan; uniform float uUnit, uAmb, uShadow, uView;
 vec2 toPix(vec3 q, out float z){
   vec3 v = q - uC; z = -dot(v, uBk);
   vec2 ndc = vec2(dot(v, uRt)/(z*uTan.x), dot(v, uUp)/(z*uTan.y));
@@ -4405,24 +4633,26 @@ void main(){
     vec3 c = uView < 1.5 ? alb : uView < 2.5 ? gn.xyz*0.5 + 0.5 : vec3(gp.w > 0.0 ? 1.0/(1.0 + gp.w*uUnit*0.06) : 0.0);
     o = vec4(c*a*0.6, 1.0); return;
   }
+  if (dot(em, em) > 0.0 && a < 0.5) sky = em;   // a sky the render wrote into its emission
   if (a < 0.002){ o = vec4(sky, 1.0); return; }
   vec3 P = gp.xyz, V = normalize(uC - P), N = gn.xyz;
   if (dot(N, N) < 0.01) N = V;
   if (dot(N, V) < 0.0) N = -N;
-  vec3 col = alb*uAmb*(0.55 + 0.45*N.y)*vec3(0.82, 0.9, 1.0);
+  vec3 col = alb*uAmb*(0.55 + 0.45*N.y)*uAmbTint;
   float seed = fract(sin(dot(vec2(px), vec2(12.9898, 78.233)))*43758.5453);
   for (int i = 0; i < 4; i++){
     if (i >= uNL) break;
     vec4 LP = uLP[i]; vec3 Ld; float att, maxT;
-    if (LP.w > 0.5){ vec3 v = LP.xyz - P; float d = length(v); Ld = v/max(d, 1e-6); float dm = d*uUnit; att = 1.0/max(dm*dm, 0.05); maxT = d; }
+    if (LP.w > 0.5){ vec3 v = LP.xyz - P; float d = length(v); Ld = v/max(d, 1e-6); float dm = d*uUnit; att = 1.0/max(dm*dm, 1.0); maxT = d; }
     else { Ld = normalize(LP.xyz); att = 1.0; maxT = 1e9; }
     float ndl = dot(N, Ld); if (ndl <= 0.0) continue;
     float prof = 1.0;
-    if (uLAx[i].w > 0.0){ float ang = acos(clamp(dot(-Ld, uLAx[i].xyz), -1.0, 1.0)); prof = 0.015 + 0.985*exp(-pow(ang/uLAx[i].w, 2.0)); }
+    if (uLAx[i].w > 0.0){ float ang = acos(clamp(dot(-Ld, uLAx[i].xyz), -1.0, 1.0)); prof = 0.004 + 0.996*exp(-pow(ang/uLAx[i].w, 2.0)); }
     vec3 c0 = alb*uLCol[i]*ndl*att*prof;
     col += max(c0.r, max(c0.g, c0.b)) < 0.002 ? c0 : c0*shadowTo(P, N, Ld, maxT, seed);   // faint spill needs no shadow
   }
   col += em;
+  if (uFog.w > 0.0) col = mix(uFog.rgb, col, exp(-gp.w*uUnit/uFog.w));   // aerial haze over distance
   o = vec4(mix(sky, col, a), 1.0);
 }`;
 /* how much light each kind of lamp throws on the scene, in plate units at one metre (the sun as an irradiance) */
@@ -4490,7 +4720,8 @@ function shotShade(){
   for (let i = 0; i < n; i++){
     const l = state.lights[i], T = LIGHT_TYPES[l.type], d = derived[i], pos = shotLightPos(l);
     if (pos.dir) LP.set([pos.dir[0], pos.dir[1], pos.dir[2], 0], i*4); else LP.set([pos.p[0], pos.p[1], pos.p[2], 1], i*4);
-    const I = (SHOT_ILLUM[l.type] ?? 20)*Math.pow(2, l.ev || 0)*((l.jit && l.jit.f) || 1), col = d ? d.col : [1, 1, 1];
+    const lg = (SHOT.look.lightGain && SHOT.look.lightGain[l.type]) || 1;
+    const I = (SHOT_ILLUM[l.type] ?? 20)*lg*Math.pow(2, l.ev || 0)*((l.jit && l.jit.f) || 1), col = d ? d.col : [1, 1, 1];
     LC.set([col[0]*I, col[1]*I, col[2]*I], i*3);
     if (T.beam && pos.p){
       // the beam points 'aim' degrees away from the lens, tipped down (or up, for lamps aimed at the sky)
@@ -4510,6 +4741,8 @@ function shotShade(){
   gl.uniform3fv(pr.u.uC, c.C); gl.uniform3fv(pr.u.uRt, c.right); gl.uniform3fv(pr.u.uUp, c.up); gl.uniform3fv(pr.u.uBk, c.back);
   gl.uniform2f(pr.u.uTan, c.tanH, c.tanV); gl.uniform1f(pr.u.uUnit, um); gl.uniform1f(pr.u.uAmb, SHOT.ambient);
   gl.uniform3f(pr.u.uSky, 0.32*SHOT.ambient, 0.42*SHOT.ambient, 0.7*SHOT.ambient);
+  const tint = SHOT.look.ambTint || [0.82, 0.9, 1.0], fog = SHOT.look.fog;
+  gl.uniform3f(pr.u.uAmbTint, tint[0], tint[1], tint[2]); gl.uniform4f(pr.u.uFog, fog ? fog[0] : 0, fog ? fog[1] : 0, fog ? fog[2] : 0, fog ? fog[3] : 0);
   gl.uniform1f(pr.u.uShadow, SHOT.shadows ? 1 : 0); gl.uniform1f(pr.u.uView, { lit: 0, albedo: 1, normals: 2, depth: 3 }[SHOT.view] || 0);
   full();
   gl.bindTexture(gl.TEXTURE_2D, shotGL.rt.t); gl.generateMipmap(gl.TEXTURE_2D);
@@ -4535,29 +4768,51 @@ function syncShotUI2(){
     $('#shotUnits').querySelector('option[value="auto"]').textContent = `Auto (${({ 1: 'metres', 0.01: 'centimetres', 0.001: 'millimetres' })[S.units] || S.units + ' m'})`;
     $('#shotView').value = SHOT.view; $('#shotSnap').checked = SHOT.snap; $('#shotShadow').checked = SHOT.shadows; $('#shotShow').checked = state.showSet;
     $('#shotEV').value = state.plateEV; $('#shotEVOut').textContent = fmtEV(state.plateEV);
-  } else if (!SHOT.busy) shotInfo('Black. Load a render\'s utility pass (world position, normals and depth, plus surface colour if you have it) to see the flare in the shot, or try the example street.');
+  } else if (!SHOT.busy) shotInfo('No shot loaded. Pick a sequence and shot at the top of the panel.');
 }
 function useShot(S, kind, keepLights){
   SHOT.S = S; SHOT.on = true; SHOT.kind = kind; SHOT.units = null; SHOT.busy = false;
-  SHOT.ambient = kind === 'example' ? 0.012 : 0.3;
+  SHOT.look = S.look || {}; SHOT.ambient = SHOT.look.ambient ?? 0.3;
   shotUpload(S);
   state.scene = 'shot'; state.shotKind = kind; state.showSet = true; state.plateEV = 0;
+  syncShotPick();
   // the shot's camera: focal length, stop and focus from the metadata
   if (S.meta.focal) state.focal = S.meta.focal;
   if (S.meta.fstop){ const list = tStops(); let best = list[0]; for (const t of list) if (Math.abs(Math.log(t/S.meta.fstop)) < Math.abs(Math.log(best/S.meta.fstop))) best = t; state.t = best; }
   if (S.meta.focusM){ state.autoFocus = false; $('#autoFocus').checked = false; setFocus(S.meta.focusM); }
   if (!keepLights && S.lights){
-    state.lights = S.lights.slice(0, 4).map(o => { const l = mkLight(o.type, o.x, o.y); l.dist = o.dist; return l; });
+    state.lights = S.lights.slice(0, 4).map(o => { const l = mkLight(o.type, o.x, o.y); l.dist = o.dist; if (o.aim !== undefined) l.aim = o.aim; if (o.kelvin) l.kelvin = o.kelvin; return l; });
     state.sel = 0;
   } else state.lights.forEach(shotSnap);
   cam.x = 0; cam.y = 0;
   layout(); onLensChange(); syncIris(); syncFocal(); syncHandles(); renderLightPanel(); syncShotUI2(); placeHandles();
   needsFrame = true;
 }
-function loadExampleShot(keepLights){
-  SHOT.busy = true; shotInfo('Building the example street…');
-  setTimeout(() => { try { useShot(makeExampleStreet(1280, 692), 'example', keepLights); } catch (e){ console.error(e); SHOT.busy = false; shotInfo('Could not build the example: ' + e.message); } }, 30);
+function loadDemoShot(kind, keepLights){
+  if (!DEMO_SHOTS[kind]) return;
+  SHOT.busy = true; shotInfo('Reading the utility pass for ' + DEMO_SHOTS[kind].seq + ' ' + DEMO_SHOTS[kind].shot + '…');
+  setTimeout(() => { try { useShot(demoBuild(kind), 'demo:' + kind, keepLights); } catch (e){ console.error(e); SHOT.busy = false; shotInfo('Could not build that shot: ' + e.message); } }, 30);
 }
+const loadExampleShot = keepLights => loadDemoShot('street', keepLights);
+/* the sequence and shot pickers: production sequences will list here once the tool can find shots on disk; for now
+   the demo sequences stand in, each with a utility pass built in the browser */
+function syncShotPick(){
+  const k = (state.shotKind || '').startsWith('demo:') ? state.shotKind.slice(5) : '', D = DEMO_SHOTS[k];
+  $('#seqSel').value = D ? D.seq : (SHOT.on && state.scene === 'shot' ? 'files' : '');
+  const seq = $('#seqSel').value, shots = Object.entries(DEMO_SHOTS).filter(([, d]) => d.seq === seq);
+  $('#shotSel').innerHTML = shots.length ? shots.map(([key, d]) => `<option value="${key}">${d.shot} · ${d.title}</option>`).join('')
+    : `<option value="">${seq === 'files' ? 'Dropped files' : '—'}</option>`;
+  $('#shotSel').disabled = !shots.length;
+  if (D) $('#shotSel').value = k;
+  $('#shotPath').textContent = SHOT.on && state.scene === 'shot' && SHOT.S
+    ? (SHOT.S.path ? `Utility pass ${SHOT.S.path} (demo: built in the browser)` : `Utility pass: ${SHOT.S.name}`)
+    : 'No shot: the flare over black.';
+}
+$('#seqSel').addEventListener('change', e => {
+  const seq = e.target.value, first = Object.entries(DEMO_SHOTS).find(([, d]) => d.seq === seq);
+  if (first) loadDemoShot(first[0], false); else { clearShot(); syncShotPick(); }
+});
+$('#shotSel').addEventListener('change', e => { if (DEMO_SHOTS[e.target.value]) loadDemoShot(e.target.value, false); });
 async function loadShotFiles(files){
   SHOT.busy = true; shotInfo('Reading ' + files.map(f => f.name).join(' + ') + '…');
   try {
@@ -4565,11 +4820,7 @@ async function loadShotFiles(files){
     useShot(await shotFromEXRs(bufs), 'file', true);
   } catch (e){ console.error(e); SHOT.busy = false; shotInfo('Could not use that: ' + e.message + '.'); }
 }
-function clearShot(){ SHOT.on = false; SHOT.S = null; state.scene = 'black'; state.shotKind = ''; state.focal = null; layout(); onLensChange(); syncFocal(); syncHandles(); renderLightPanel(); syncShotUI2(); placeHandles(); needsFrame = true; }
-$('#loadShot').addEventListener('click', () => $('#shotFile').click());
-$('#shotFile').addEventListener('change', e => { const fs = [...(e.target.files || [])]; if (fs.length) loadShotFiles(fs); e.target.value = ''; });
-$('#exampleShot').addEventListener('click', () => loadExampleShot(false));
-$('#clearShot').addEventListener('click', clearShot);
+function clearShot(){ SHOT.on = false; SHOT.S = null; state.scene = 'black'; state.shotKind = ''; state.lights = []; state.focal = null; layout(); onLensChange(); syncFocal(); syncHandles(); renderLightPanel(); syncShotUI2(); placeHandles(); needsFrame = true; }
 $('#shotAmb').addEventListener('input', e => { SHOT.ambient = sliderToAmb(+e.target.value); syncShotUI2(); needsFrame = true; });
 $('#shotEV').addEventListener('input', e => { state.plateEV = +e.target.value; $('#shotEVOut').textContent = fmtEV(state.plateEV); needsFrame = true; });
 $('#shotUnits').addEventListener('change', e => { SHOT.units = e.target.value === 'auto' ? null : +e.target.value; state.lights.forEach(shotSnap); syncShotUI2(); renderLightPanel(); needsFrame = true; });
@@ -4577,7 +4828,9 @@ $('#shotView').addEventListener('change', e => { SHOT.view = e.target.value; nee
 $('#shotSnap').addEventListener('change', e => { SHOT.snap = e.target.checked; });
 $('#shotShadow').addEventListener('change', e => { SHOT.shadows = e.target.checked; needsFrame = true; });
 $('#shotShow').addEventListener('change', e => { state.showSet = e.target.checked; const p = $('#showSet'); if (p) p.checked = state.showSet; needsFrame = true; });
-syncShotUI2();
+syncShotUI2(); syncShotPick();
+// open on the first demo shot: the sun, the light flares are used for most
+setTimeout(() => { if (!SHOT.on && !state.lights.length) loadDemoShot('meadow', false); }, 0);
 
 /* ---- before / after wipe ---- */
 function syncWipe(){ $('#wipe').hidden = !state.compare; $('#wipe').style.left = (state.split*100) + '%'; $('#compare').checked = state.compare; }
@@ -4673,7 +4926,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 43;
+const APP_VERSION = 45;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
@@ -4743,6 +4996,7 @@ function applyLook(o){
     if (!SCENES[state.scene]) state.scene = 'black';
     if (state.scene === 'shot' && !(SHOT.on && SHOT.S)){
       if (state.shotKind === 'example'){ loadExampleShot(true); }
+      else if ((state.shotKind || '').startsWith('demo:')){ loadDemoShot(state.shotKind.slice(5), true); }
       else { state.scene = 'black'; setTimeout(() => shotInfo('This look was made over a loaded utility pass: load it again to see the shot.'), 0); }
     }
     syncAllUI();

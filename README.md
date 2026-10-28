@@ -17,11 +17,13 @@ realistic by default, quick to direct, and driven by real shot data rather than 
   anamorphic, zoom). Ghosts are ray traced through a lens model, and the star comes from the iris shape. Veiling glare,
   streaks and haze all react to the T-stop, focal length, focus and light position. It opens on Large-format modern
   (ARRI Signature Prime class, Roger Deakins' choice for *1917*) with a subtle flare amount and clean front glass.
-- **See it in the shot.** Load a render's utility pass (world position, normals and depth, plus surface colour and
-  emission if you have them) and the tool builds a rough model of the shot from it in a second or two, with the camera
-  read from the EXR metadata (or solved from the pixels). Lights dragged onto the scene take the distance of the surface
-  under them, hide behind whatever is in front of them, and light the model with falloff, beams and shadows.
-  **Example street** builds the same buffers for a made-up night street; `examples/` has it as EXR files to try the loader.
+- **See it in the shot.** Pick a sequence and shot at the top and the tool builds a rough model of that shot from its
+  utility pass (world position, normals and depth, plus surface colour and emission) in a second or two, with the
+  camera read from the EXR metadata (or solved from the pixels). The shot's tagged lights come with it; lights dragged
+  onto the scene take the distance of the surface under them, hide behind whatever is in front of them, and light the
+  model with falloff, beams and shadows. Until the picker is connected to a pipeline, three demo shots stand in
+  (golden-hour meadow into the sun, concert stage with spotlights, night street), each with a utility pass generated
+  the way a renderer would write it. For testing, utility EXRs can be dropped on the frame; `examples/` has two.
 - **Made for comp.** Turn off **Sources** under the frame to see the flare alone, as it would go over a render, and
   **Handles** to hide the light markers. **+ Add light** (or `A`) opens the light picker; `Delete` removes a light.
 - **Before/after wipe**, a **present mode** (press `P`), and **Share a look**, which saves every setting to one file.
