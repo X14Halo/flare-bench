@@ -388,7 +388,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <dl>
         <dt>A lens, as an optical prescription</dt><dd>Each lens family is a real optical design written the way a lens designer writes one: a table of surfaces, each with its radius of curvature, the spacing to the next, the glass's refractive index and Abbe number (its dispersion), its clear diameter, and where the iris sits. The spherical primes are built around a double-Gauss core. The anamorphics add a cylindrical front group, solved numerically to be afocal in one axis so it squeezes only horizontally. Digital bodies add the IR-cut filter, cover glass and sensor behind the lens, because they reflect light too. The designs represent each lens type; they are not the makers' private prescriptions.</dd>
         <dt>Paraxial optics</dt><dd>From that table the tool works out the focal length, back focus and entrance pupil: where the iris appears from the front, and how big. Anamorphics get this separately for each axis. Rays are aimed through that pupil, so stopping down really does shrink the bundle of light that gets in.</dd>
-        <dt>Where ghosts come from</dt><dd>A ghost is light that reflects twice inside the lens before it reaches the sensor: backwards off one surface, then forwards again off an earlier one. A lens with <i>N</i> surfaces has <i>N</i>(<i>N</i>−1)/2 such paths, so a 20-surface lens has 190. Each path is test-traced at several positions across the frame and ranked by how concentrated its light is, and the strongest 48 to 128 (set by Ray density) are kept. Paths with four or more reflections are dropped: each extra pair of reflections makes the light another 10,000 times or more dimmer.</dd>
+        <dt>Where ghosts come from</dt><dd>A ghost is light that reflects twice inside the lens before it reaches the sensor: backwards off one surface, then forwards again off an earlier one. A lens with <i>N</i> surfaces has <i>N</i>(<i>N</i>−1)/2 such paths, so a 20-surface lens has 190. Each path is test-traced at several positions across the frame and ranked by how concentrated its light is, and the strongest 48 to 128 (set by Ray density) are kept. Paths with four or more reflections are dropped: each extra pair of reflections makes the light another 10,000 times or more dimmer. Lens designers also check where every ghost focuses and reshape the glass until none lands sharp on the sensor, where it would show as a crisp copy of the light mirrored through the centre. The lens models here are representative rather than optimised that way, so a path that would focus is given a designed lens's minimum blur, with its light kept, and an anamorphic line path that would draw a second streak across the frame is left out.</dd>
         <dt>Real ray tracing, on the graphics card</dt><dd>For every ghost path, a grid of up to 128×128 rays is spread evenly across the pupil (using an equal-area square-to-disc mapping) and traced through every surface. Each surface gets an exact ray–sphere or ray–cylinder intersection and Snell's law refraction, with mirror reflection at the path's two ghost surfaces. Rays that miss a surface, strike outside an element's rim, or totally internally reflect are lost, as they would be in real glass. Each ray is one pixel of a shader, so at the higher settings millions of rays are traced for every frame.</dd>
         <dt>Coatings and Fresnel reflection</dt><dd>At every surface, the fraction reflected is computed for each wavelength and angle. Bare glass and single- and two-layer coatings use the thin-film characteristic-matrix method, averaged over both polarisations. Modern broadband multicoats follow curves shaped like published reflectance data, including the faint residual colour (green, amber, violet) that tints each maker's ghosts. A ghost's brightness and colour are the product of its two reflecting surfaces and the transmission through every other surface on its path.</dd>
         <dt>Spectral, not RGB</dt><dd>Six wavelengths from 420 to 660 nm are traced separately, with each glass's index changing with wavelength (from its Abbe number), so ghosts fringe and rainbow the way real dispersion makes them. Every source has an emission spectrum: a blackbody for the sun and tungsten, line spectra for sodium and discharge lamps, narrow bands for LEDs. Each traced wavelength is turned into colour with the CIE 1931 colour-matching functions, and sub-bands interpolated between neighbouring wavelengths keep rainbow edges continuous.</dd>
@@ -853,7 +853,7 @@ function selectGhosts(sys, L, maxG){
     if (S[a].stop) continue;
     for (let b = 0; b < a; b++){
       if (S[b].stop) continue;
-      let score = 0, Tsum = 0, amax = 0, line = false, onSrc = true;
+      let score = 0, Tsum = 0, amax = 0, line = false, onSrc = true, foc = Infinity, yDev = 0;
       for (const [fx, fy] of fields){
         const d = lightDir(sys, L, fx, fy);
         const xs = [], ys = []; let E = 0, nin = 0;
@@ -873,13 +873,18 @@ function selectGhosts(sys, L, maxG){
         const area = Math.PI*Math.max(sx*2, 0.05)*Math.max(sy*2, 0.05)/(L.halfH*L.halfH);
         score = Math.max(score, E/Math.sqrt(area));
         if (Math.max(sx, sy) > 8*Math.max(Math.min(sx, sy), 1e-4)) line = true;
+        foc = Math.min(foc, 2*Math.max(sx, sy)/L.halfH);
+        if (Math.abs(fy) > 0.3) yDev = Math.max(yDev, Math.abs(-my/L.halfH - fy));
         if (Math.abs(-mx*L.squeeze/L.halfH - fx) > 0.12 || Math.abs(-my/L.halfH - fy) > 0.12 || Math.max(sx, sy)*2/L.halfH > 0.25) onSrc = false;
         amax = Math.max(amax, area);
         Tsum += E;
       }
       // small ghosts that always sit on the light itself (flat window pairs, filter halos) vanish inside its glow: rank them low
       if (onSrc) score *= 0.15;
-      if (score > 0) out.push({ a, b, score, mode: (b > si) ? 1 : 0, T: Tsum, area: amax, line });
+      // an anamorphic streak runs through the light; a line path that lands across the frame (a second, mirrored streak)
+      // makes the flare read as a copy of itself, so it is left out
+      if (line && yDev > 0.25) score = 0;
+      if (score > 0) out.push({ a, b, score, mode: (b > si) ? 1 : 0, T: Tsum, area: amax, line, foc });
     }
   }
   out.sort((p, q) => q.score - p.score);
@@ -2110,7 +2115,7 @@ const FS_GPREP = `#version 300 es
 precision highp float; precision highp int;
 layout(location=0) out vec4 o0; layout(location=1) out vec4 o1;
 uniform highp sampler2D uT0, uT1;
-uniform int uGrid, uCols, uTiles, uSplit; uniform float uDmax, uCellK, uStretch, uRot, uEpsHi, uEpsLo, uLineFade;
+uniform int uGrid, uCols, uTiles, uSplit, uTileOff, uNSub; uniform float uDmax, uCellK, uStretch, uRot, uEpsHi, uEpsLo, uLineFade; uniform highp sampler2D uGhT;
 /* pupil position of grid ray (i, j): the same concentric map and per-pass rotation the tracer used */
 vec2 pupilU(ivec2 c){
   vec2 u = vec2(c)/float(uGrid - 1)*2.0 - 1.0;
@@ -2138,6 +2143,8 @@ void main(){
   int i = px.x - tX*uGrid, j = px.y - tY*uGrid;
   gB = ivec2(tX*uGrid, tY*uGrid);
   float eps = tl < uSplit ? uEpsHi : uEpsLo;
+  // a ghost path that would come to a near-perfect focus gets the defocus a lens designer gives it (see selectGhosts)
+  { int tg = uTileOff + tl; eps += texelFetch(uGhT, ivec2((tg/6)/uNSub, 0), 0).w; }
   // Every ghost is an image of the pupil. Where a ghost collapses to a line or point caustic (cylindrical anamorphic
   // ghosts do this all the time) the mesh is thinner than a pixel and folds over itself, so it only lights the sample
   // points it happens to cross: rows of dots that crawl as the light moves. Give every ghost a minimum footprint (a
@@ -2720,7 +2727,12 @@ function lensSystem(){
   // small, sharp ghosts first (drawn at full resolution), big soft ones after (drawn at half resolution)
   const list = sel.list.slice().sort((p, q) => p.area - q.area);
   const nSharp = list.filter(g => g.area < 1.2).length;
-  list.forEach((g, i) => GH.set([g.a, g.b, g.mode, 0], i*4));
+  /* Lens designers check where every ghost path focuses and bend curvatures until none lands sharp on the sensor: a
+     focused ghost is a crisp copy of the light, mirrored through the frame centre. These lens models are representative,
+     not optimised that way, so a path that would focus is given the defocus a designed lens would have (a minimum
+     ghost radius, energy kept). The anamorphic streak paths, which are meant to be lines, are left alone. */
+  const GHOST_MIN_R = 0.05;
+  list.forEach((g, i) => GH.set([g.a, g.b, g.mode, g.line ? 0 : Math.max(0, GHOST_MIN_R - (isFinite(g.foc) ? g.foc : 1))], i*4));
   /* manufacturing tolerances: every element sits a little off-centre and tilted, so ghosts are never perfectly aligned */
   const S2 = new Float32Array(40*4), tr = mulberry32(L.seed*131 + 7), tl = L.tol;
   sys.S.forEach((q, i) => { if (q.stop) return; S2.set([(tr()*2 - 1)*tl.dec, (tr()*2 - 1)*tl.dec, (tr()*2 - 1)*tl.tilt, (tr()*2 - 1)*tl.tilt], i*4); });
@@ -3321,7 +3333,7 @@ function render(t){
           gl.useProgram(gp.p);
           gl.bindFramebuffer(gl.FRAMEBUFFER, prepRT.f);
           bindTex(2, traceRT.t0); bindTex(3, traceRT.t1);
-          gl.uniform1i(gp.u.uTiles, cnt); gl.uniform1i(gp.u.uSplit, split);
+          gl.uniform1i(gp.u.uTiles, cnt); gl.uniform1i(gp.u.uSplit, split); gl.uniform1i(gp.u.uTileOff, off); gl.uniform1i(gp.u.uNSub, NSUB); gl.uniform1i(gp.u.uGhT, 5);
           full();
           // ...then draw them as meshes: sharp ghosts into the full-resolution buffer, big soft ones at half resolution
           gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
@@ -4926,7 +4938,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 45;
+const APP_VERSION = 47;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
@@ -4994,7 +5006,7 @@ function applyLook(o){
   flickHist.clear();   // same moment of the handheld move or flicker
   const done = () => {
     if (!SCENES[state.scene]) state.scene = 'black';
-    if (state.scene === 'shot' && !(SHOT.on && SHOT.S)){
+    if (state.scene === 'shot' && (!(SHOT.on && SHOT.S) || (SHOT.kind !== state.shotKind && (state.shotKind || '').startsWith('demo:')))){
       if (state.shotKind === 'example'){ loadExampleShot(true); }
       else if ((state.shotKind || '').startsWith('demo:')){ loadDemoShot(state.shotKind.slice(5), true); }
       else { state.scene = 'black'; setTimeout(() => shotInfo('This look was made over a loaded utility pass: load it again to see the shot.'), 0); }
