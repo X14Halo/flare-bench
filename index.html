@@ -2778,7 +2778,7 @@ function buildGhosts(){
   L.extra.forEach(e => out.push(G(e)));
   // rainbow elements, added with the Rainbow control: a dispersed halo ring around the light, then a rainbow arc across
   // the frame on the ghost axis, then a smaller rainbow ring further along it
-  [{ k: 0.0, r: 0.5, i: 0.6, type: 5, chroma: 0.11, soft: 0.05, seed: 2007 },
+  [{ k: 1.0, r: 0.5, i: 0.6, type: 5, chroma: 0.11, soft: 0.05, seed: 2007 },   // k = 1: centred on the light itself
    { k: -0.62, r: 0.58, i: 0.9, type: 5, chroma: 0.09, soft: 0.04, clip: 0.5, angC: 1.0, angW: 1.6, seed: 3013 },
    { k: -1.25, r: 0.2, i: 0.35, type: 5, chroma: 0.14, soft: 0.04, clip: 0.2, angC: 0.9, angW: 1.4, seed: 4021 }].forEach(e => out.push(G(e)));
   if (state.filter === 'clear') out.push(G({ k:-1, r:1.15, i:0.9/L.ghostGain, type:4, chroma:0.006, soft:0.12, poly:0, angC:1, angW:99 }));
@@ -4938,7 +4938,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 47;
+const APP_VERSION = 48;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
