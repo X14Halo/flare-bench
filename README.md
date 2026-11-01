@@ -26,7 +26,10 @@ realistic by default, quick to direct, and driven by real shot data rather than 
   the way a renderer would write it. For testing, utility EXRs can be dropped on the frame; `examples/` has two.
 - **Made for comp.** Turn off **Sources** under the frame to see the flare alone, as it would go over a render, and
   **Handles** to hide the light markers. **+ Add light** (or `A`) opens the light picker; `Delete` removes a light.
-- **Before/after wipe**, a **present mode** (press `P`), and **Share a look**, which saves every setting to one file.
+- **Rainbow wash.** An art-directed element in the mixer for the big, soft, rainbow-rimmed blooms many films use
+  (the kind a filter in front of the lens or single-coated glass throws), with its own size control, in any flare model.
+- **Before/after wipe**, a **present mode** (press `P`), **Reset all**, and **Share a look**, which saves every setting
+  to one file.
 
 The panel's **How it works → Under the hood** section explains the optics in detail: the lens prescriptions, ghost
 paths, GPU ray tracing, coatings, spectral rendering, diffraction and glare.
