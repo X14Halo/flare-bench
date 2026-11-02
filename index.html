@@ -367,22 +367,28 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <p class="sub">What cinematographers do to a lens to make it flare more. Each is simulated from the physics and works with any lens.</p>
       <div class="field"><span id="coatLbl">Coating</span><div class="seg" role="radiogroup" aria-labelledby="coatLbl" id="coatSeg"></div></div>
       <h3 class="sub-h">Diffraction grating filter</h3>
-      <div class="seg" role="radiogroup" aria-label="Diffraction grating" id="gratSeg"></div>
+      <div class="field"><span>Filter</span><select id="gratSel" aria-label="Diffraction grating filter">
+        <option value="off">None</option><option value="lines">Lines: one row of spectra</option><option value="cross">Cross: two rows</option>
+        <option value="star6">Star, 6 rays of rainbow</option><option value="star8">Star, 8 rays of rainbow</option><option value="circular">Circular: rainbow rings</option></select></div>
       <div id="gratCtl">
         <div class="row"><label for="gratD">Grooves</label><input type="range" id="gratD" min="0" max="100" step="1"><output id="gratDOut" for="gratD"></output></div>
         <div class="row"><label for="gratRot">Rotation</label><input type="range" id="gratRot" min="0" max="180" step="1"><output id="gratRotOut" for="gratRot"></output></div>
+        <div class="row"><label for="gratSoft">Softness</label><input type="range" id="gratSoft" min="0" max="1" step="0.05"><output id="gratSoftOut" for="gratSoft"></output></div>
         <div class="row"><label for="gratAmt">Strength</label><input type="range" id="gratAmt" min="0" max="3" step="0.05"><output id="gratAmtOut" for="gratAmt"></output></div>
       </div>
       <h3 class="sub-h">Prism at the lens</h3>
-      <label class="switch"><span>Hold a prism at the lens<small>Pulls a light from outside the frame in as a rainbow</small></span><input type="checkbox" id="prismOn"></label>
+      <label class="switch"><span>Hold a prism at the lens<small>Bends what is behind it into a rainbow-edged second image, and pulls lights in from outside the frame</small></span><input type="checkbox" id="prismOn"></label>
       <div id="prismCtl">
         <div class="field"><span>Glass</span><select id="prismGlass" aria-label="Prism glass"></select></div>
         <div class="row"><label for="prismA">Apex angle</label><input type="range" id="prismA" min="5" max="60" step="1"><output id="prismAOut" for="prismA"></output></div>
         <div class="row"><label for="prismRot">Rotation</label><input type="range" id="prismRot" min="0" max="360" step="1"><output id="prismRotOut" for="prismRot"></output></div>
         <div class="row"><label for="prismTilt">Tilt</label><input type="range" id="prismTilt" min="-45" max="45" step="1"><output id="prismTiltOut" for="prismTilt"></output></div>
         <div class="row"><label for="prismCov">Covers</label><input type="range" id="prismCov" min="0.1" max="1" step="0.05"><output id="prismCovOut" for="prismCov"></output></div>
-        <div class="row"><label for="prismSoft">Softness</label><input type="range" id="prismSoft" min="0" max="1" step="0.05"><output id="prismSoftOut" for="prismSoft"></output></div>
-        <div class="row"><label for="prismAmt">Strength</label><input type="range" id="prismAmt" min="-12" max="0" step="0.5"><output id="prismAmtOut" for="prismAmt"></output></div>
+        <div class="row"><label for="prismSoft">Edge softness</label><input type="range" id="prismSoft" min="0" max="1" step="0.05"><output id="prismSoftOut" for="prismSoft"></output></div>
+        <div class="row"><label for="prismBlur">Blur</label><input type="range" id="prismBlur" min="0" max="1" step="0.05"><output id="prismBlurOut" for="prismBlur"></output></div>
+        <div class="row"><label for="prismSpread">Colour spread</label><input type="range" id="prismSpread" min="1" max="10" step="0.25"><output id="prismSpreadOut" for="prismSpread"></output></div>
+        <div class="row"><label for="prismRefl">Reflections</label><input type="range" id="prismRefl" min="0" max="1" step="0.05"><output id="prismReflOut" for="prismRefl"></output></div>
+        <div class="row"><label for="prismAmt">Strength</label><input type="range" id="prismAmt" min="-8" max="2" step="0.25"><output id="prismAmtOut" for="prismAmt"></output></div>
         <p class="sub" id="prismInfo"></p>
       </div>
       <h3 class="sub-h">Free-lensing</h3>
@@ -428,7 +434,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Ghosts and their cut edges</dt><dd>Ghosts are images of the lens opening, lined up through the frame centre opposite the light. Near the frame edge the glass rims clip them into crescents and cat's eyes, which change as the camera moves; stopping down shrinks the clipping.</dd>
         <dt>Flare lights on set</dt><dd>Cinematographers often make the flare on purpose with a light just out of shot aimed at the lens: a xenon torch panned on and off the lens (the Star Trek method), a small spot trimmed in from the frame edge, a mirror bouncing the sun. The three off-frame lights in the picker land where a crew would put them, just past the frame edge, so the light itself stays out of shot while its flare pours in.</dd>
         <dt>Starburst, streak, dirt</dt><dd>The starburst is diffraction off the iris blades. The anamorphic streak comes from reflections inside the cylindrical front group. Dust on the front glass shows as soft iris-shaped blobs; wipe marks and fingerprints throw streaky fans. The glass starts clean, the way a camera crew keeps it, and Lens &amp; camera details can dirty it.</dd>
-        <dt>Lens tricks</dt><dd>Cinematographers who want more flare change the lens rather than paint it on, and <b>Lens tricks</b> simulates each one from the physics, on any lens. <b>Coating</b> swaps the lens's anti-reflection coatings for a single MgF<sub>2</sub> layer (as on 1950s–70s glass, and the custom single-coated sets some films order) or none at all (the stripped "uncoated" sets): every ghost gets much brighter, since it is two reflections and each one grows from about 0.3% to 1.3% or 5%, and single-coated ghosts turn the magenta and amber of a quarter-wave layer. A modern lens with 15 or more elements stripped bare washes out completely, which is why the real uncoated sets are older, simpler designs. A <b>diffraction grating filter</b> throws a row of spectra either side of each light, at exactly the angles its groove spacing sets. A <b>prism at the lens</b> bends a light, wavelength by wavelength, into a dispersed second image, and can pull a light from outside the frame into it. <b>Free-lensing</b> tilts the lens off the mount, so the flare lines up through a point off the frame centre and light leaks in through the gap.</dd>
+        <dt>Lens tricks</dt><dd>Cinematographers who want more flare change the lens rather than paint it on, and <b>Lens tricks</b> simulates each one from the physics, on any lens. <b>Coating</b> swaps the lens's anti-reflection coatings for a single MgF<sub>2</sub> layer (as on 1950s–70s glass, and the custom single-coated sets some films order) or none at all (the stripped "uncoated" sets): every ghost gets much brighter, since it is two reflections and each one grows from about 0.3% to 1.3% or 5%, and single-coated ghosts turn the magenta and amber of a quarter-wave layer. A modern lens with 15 or more elements stripped bare washes out completely, which is why the real uncoated sets are older, simpler designs. A <b>diffraction grating filter</b> splits everything bright into spectra at exactly the angles its groove spacing sets: rows of rainbow (Lines, Cross), fans of rainbow rays (Star 6 and 8) or huge rainbow rings and arcs round each light (Circular). A <b>prism at the lens</b> bends the whole view behind it, wavelength by wavelength, into a rainbow-edged second image that fades in across the part of the frame looking through it, plus a second copy bounced off its base, and pulls lights in from outside the frame. <b>Free-lensing</b> tilts the lens off the mount, so the flare lines up through a point off the frame centre and light leaks in through the gap.</dd>
         <dt>Big soft rainbow flares</dt><dd>The huge rainbow arcs and washes of spectrum in many films come from things in front of the lens rather than the lens itself: gratings and prisms (both simulated under Lens tricks), crystals and textured glass, or a flat filter whose reflection off the front element makes a giant ring. <b>Rainbow arcs</b> in the mixer is the art-directed version of those huge soft rings, for when a look calls for one, with its own <b>Arc size</b>.</dd>
         <dt>Flicker</dt><dd>Sodium streetlights and bulbs on mains power pulse at twice the mains frequency, and LED headlights at their PWM rate; off-speed frame rates and shutters make them beat, and the rolling shutter turns that into bands.</dd>
         <dt>Using it in comp</dt><dd>The flare is meant to go over a render, where the light itself already exists. Turn off <b>Sources</b> under the frame to see the flare alone: the ghosts, star, streak and the glow the lens adds around the light, without the sun's disc or the bulb. <b>Handles</b> hides the light markers for a clean view, and Present (<kbd>P</kbd>) hides the panel.</dd>
@@ -464,8 +470,8 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Spectral, not RGB</dt><dd>Six wavelengths from 420 to 660 nm are traced separately, with each glass's index changing with wavelength, so ghosts fringe and rainbow the way real dispersion makes them. Every source has an emission spectrum: a blackbody for the sun and tungsten, line spectra for sodium and discharge lamps, narrow bands for LEDs. Each traced wavelength is turned into colour with the CIE 1931 colour-matching functions, and sub-bands interpolated between neighbouring wavelengths keep rainbow edges continuous.</dd>
         <dt>Glass dispersion</dt><dd>How much a glass's index changes across the spectrum comes from real catalogue glasses. Each glass in a lens design takes the Sellmeier dispersion curve (the standard fit to measured indices) of the nearest Schott glass by index and Abbe number, scaled to the design's own values. That keeps the real shape of the curve: crowns barely change across the spectrum, while flints and dense flints rise steeply in the blue, which is what pushes violet fringes outward on ghost rims. The curve is fitted as a polynomial for the graphics card.</dd>
         <dt>Coatings you can change</dt><dd>The Coating choice re-coats every glass surface of the lens before tracing: a quarter-wave MgF<sub>2</sub> layer tuned to 550 nm, or bare glass. The thin-film calculation then does the rest. A quarter-wave layer reflects least in the green and most at the ends of the spectrum, so single-coated ghosts come out magenta and amber, and bare glass reflects about 4–6% evenly, so uncoated ghosts are bright and neutral. The camera's IR filter, cover glass and sensor keep their own coatings. In the Artistic model the same choice scales the ghosts and haze by the equivalent amount.</dd>
-        <dt>Diffraction grating</dt><dd>A grating filter is a plate ruled with fine parallel grooves. Light of wavelength λ leaves in order <i>m</i> at the angle where sin θ = <i>m</i>λ/<i>d</i>, with <i>d</i> the groove spacing, so each order is a full spectrum, violet nearest the light and red furthest out, at a distance set by the lens's focal length. Orders 1 to 3 are drawn with typical efficiencies (about 10%, 2.5% and 0.8% of the light), spread over each spectrum so no energy is created, and as wide as the light's own image. A cross grating does the same on two axes. Finer gratings throw the spectra further.</dd>
-        <dt>Prism at the lens</dt><dd>Each light is traced through a real prism: its direction is refracted by Snell's law at the entry face and again at the exit face, with the prism glass's Sellmeier index for each of 12 wavelengths, Fresnel losses at both faces, and total internal reflection where it happens. Where each wavelength then lands is where the lens images that new direction, so the prism's image of the light is displaced by its deviation and smeared into a spectrum by its dispersion. A flint prism bends violet about a degree more than red, crown glass and quartz much less. The prism covers only part of the lens, so its image of an out-of-focus light is a clipped disc. Strength is in stops: 0 is all the light the prism really passes, a second image as bright as the light itself, so it opens 8 stops down, where its colours show.</dd>
+        <dt>Diffraction grating</dt><dd>A grating filter is a plate ruled with fine grooves. Light of wavelength λ leaves in order <i>m</i> at the angle where sin θ = <i>m</i>λ/<i>d</i>, with <i>d</i> the groove spacing, so each order is a full spectrum, violet nearest the source and red furthest out, at a distance set by the lens's focal length; finer gratings throw it further. Orders 1 to 3 are drawn with typical efficiencies (about 10%, 2.5% and 0.8% of the light). Straight grooves throw the spectra along one axis; cross and star filters have two, three or four sets of grooves at angles, so every light grows four, six or eight rainbow rays; a circular grating has concentric grooves, so each wavelength leaves in every direction at once and makes a ring: huge rainbow rings round each light, red outside, cut to arcs where the light is off frame. The filter sits in front of the lens and acts on everything coming in, not just the tagged lights: the lamp, its glow, lit haze, windows, highlights. Because the lens's glare and the filter are both convolutions, each diffracted copy carries the light's own glow, which is what makes the rays and rings broad and soft on an overexposed source. The incoming image is gathered at reduced resolution over a field two and a half frame heights either side, so lights outside the frame throw their rings and rays in too. <b>Softness</b> spreads each copy further, as a frosted, smeared or dirty filter and haze do.</dd>
+        <dt>Prism at the lens</dt><dd>Each point of the frame is traced backwards through a real prism: Snell's law at the exit face and again at the entry face, with the prism glass's Sellmeier index for each of 12 wavelengths and total internal reflection where it happens. That gives where the light reaching that point came from, colour by colour, so the whole view behind the prism (the light, its glow, the sky, the haze) arrives bent and split into a rainbow-edged second image; a light that far outside the frame is pulled in. A second path reflects off the prism's base inside the glass (totally, when steep enough) and makes another, more strongly bent copy (<b>Reflections</b>). The prism is held right at the lens and covers part of it, so its edge is far out of focus: the part of the frame looking through it fades in over a wide soft band (<b>Covers</b>, <b>Edge softness</b>). A flint prism bends violet about a degree more than red; crown glass and quartz much less. <b>Blur</b> softens the bent image, as a frosted or chipped prism, a crystal or a close focus does. <b>Colour spread</b> multiplies the glass's dispersion beyond any real glass, for a bigger rainbow than physics allows (1× is the real glass). Strength is in stops; 0 is all the light the covered part of the lens passes. The direct image is not dimmed by the part of the lens the prism covers, which a real prism would do by up to a stop.</dd>
         <dt>Light grazing the barrel</dt><dd>A light at the frame edge or just outside it also reaches parts of the lens that aren't meant to be seen: the blackened baffles inside the barrel and the ground bevel round the front element. That path is non-sequential, so it is simulated separately. For each part of the ring the light hits, its reflection off the baffle's cone is computed with a Fresnel reflectance that rises sharply at grazing angles (why even matte black glints there), and its refraction in through the bevel and out the back of the front element uses that element's own glass dispersion. Each new direction is imaged where the lens puts it, so the light lands as a soft crescent on the side of the frame opposite the light, fringed with spectrum where it went through glass. A matte box cuts it.</dd>
         <dt>Free-lensing</dt><dd>Holding a lens slightly off the mount tilts its optical axis, and every ghost lines up along the axis rather than the frame centre, so the whole flare swings off-centre. The tool moves the axis by the tilt angle through the focal length, traces the ghosts about the new axis, and lets light leak through the open gap between lens and body.</dd>
         <dt>From rays to an image</dt><dd>Each ghost's traced grid is drawn as a mesh of triangles. Brightness at any point is the light carried by the pupil cells around a ray divided by the area they land on. Where the mesh is squeezed, the ghost gets brighter, so the bright caustic rims, line ghosts and pinched shapes come straight out of the optics, as in Hullin et al. (SIGGRAPH 2011). The iris is applied per pixel from each ray's distance to the blade polygon, so every ghost carries the real iris shape, blade count and rotation.</dd>
@@ -1315,6 +1321,159 @@ const VS_FULL = `#version 300 es
 layout(location=0) in vec2 aPos; out vec2 vUV;
 void main(){ vUV = aPos*0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
+/* ---- filters and glass in front of the lens, acting on everything the lens sees ----
+   A grating or a prism in front of the lens acts on all the light coming in, not just the tagged lights: the lamp, the
+   lit haze around it, windows, highlights. Since the lens's own glare is a convolution and so is the filter, the order
+   does not matter: each diffracted or refracted copy of the image carries the light's glow with it. FS_TRICKE gathers
+   that image (the scene and the flare so far, at reduced resolution) over a field larger than the frame, so lights just
+   outside it can be diffracted or bent in; FS_TRICK then builds the copies. */
+const FS_TRICKE = `#version 300 es
+precision highp float; precision highp int;
+in vec2 vUV; out vec4 o;
+uniform sampler2D uScene, uFlare, uVis; uniform float uA, uM, uShowSrc, uPx; uniform vec2 uTx;
+uniform int uN; uniform vec4 uLp[4]; uniform vec3 uLe[4];
+void main(){
+  vec2 w = vec2((vUV.x*2.0 - 1.0)*uM*uA, (vUV.y*2.0 - 1.0)*uM);
+  vec3 c = vec3(0.0);
+  {
+    // beyond the frame nobody rendered anything: carry the frame's edge on outward (the sky goes on being sky),
+    // fading over about half a frame height
+    vec2 wc = clamp(w, vec2(-uA, -1.0), vec2(uA, 1.0));
+    float out_ = length(w - wc), fade = exp(-out_/0.5);
+    vec2 fu = vec2(wc.x/uA*0.5 + 0.5, wc.y*0.5 + 0.5);
+    for (int j = 0; j < 2; j++) for (int i = 0; i < 2; i++){
+      vec2 uv = clamp(fu + (vec2(float(i), float(j)) - 0.5)*uTx, vec2(0.0), vec2(1.0));
+      c += texture(uScene, uv).rgb + (out_ > 0.0 ? vec3(0.0) : texture(uFlare, uv).rgb);
+    }
+    c *= 0.25*fade;
+  }
+  // the tagged lights themselves where the frame does not show them: outside it, or with the sources hidden
+  for (int i = 0; i < 4; i++){
+    if (i >= uN) break;
+    vec4 L = uLp[i];
+    bool inF = abs(L.x) < uA && abs(L.y) < 1.0;
+    if (inF && uShowSrc > 0.5) continue;
+    float vis = texelFetch(uVis, ivec2(i, 0), 0).r*L.w, sg = max(L.z*0.7, uPx*0.75);
+    vec2 d = w - L.xy;
+    c += uLe[i]*vis*exp(-dot(d, d)/(2.0*sg*sg))/(6.2831853*sg*sg);
+  }
+  o = vec4(min(c, vec3(6.0e4)), 1.0);
+}`;
+const FS_TRICK = `#version 300 es
+precision highp float; precision highp int;
+in vec2 vUV; out vec4 o;
+uniform sampler2D uE; uniform float uA, uM, uTanV, uTexU, uLodMax; uniform vec3 uWB6;
+uniform vec4 uGr; uniform int uGrN, uGrCirc;
+uniform float uPn[12]; uniform vec4 uPrG, uPrC; uniform int uPrOn;
+float lobe(float x, float mu, float s1, float s2){ float t = (x - mu)/(x < mu ? s1 : s2); return exp(-0.5*t*t); }
+vec3 specRGB(float nm){
+  float X = 1.056*lobe(nm, 599.8, 37.9, 31.0) + 0.362*lobe(nm, 442.0, 16.0, 26.7) - 0.065*lobe(nm, 501.1, 20.4, 26.2);
+  float Y = 0.821*lobe(nm, 568.8, 46.9, 40.5) + 0.286*lobe(nm, 530.9, 16.3, 31.1);
+  float Z = 1.217*lobe(nm, 437.0, 11.8, 36.0) + 0.681*lobe(nm, 459.0, 26.0, 13.8);
+  vec3 rgb = max(vec3(3.2406*X - 1.5372*Y - 0.4986*Z, -0.9689*X + 1.8758*Y + 0.0415*Z, 0.0557*X - 0.2040*Y + 1.0570*Z), 0.0);
+  return mix(rgb, vec3(Y), 0.32);
+}
+// the light arriving from frame position w, smoothed over the spacing of the samples that read it
+vec3 Eat(vec2 w, float sp){
+  vec2 uv = vec2(w.x/(uM*uA)*0.5 + 0.5, w.y/uM*0.5 + 0.5);
+  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return vec3(0.0);
+  return textureLod(uE, uv, clamp(log2(max(sp*uTexU, 1.0)), 0.0, uLodMax)).rgb;
+}
+// how far order m of wavelength lam (um) is thrown, in frame units: sin(theta) = m lam / d
+float throwS(float m, float lam){ float sn = m*lam/uGr.y; return sn < 0.98 ? sn/sqrt(1.0 - sn*sn)/uTanV : -1.0; }
+vec3 refr(vec3 I, vec3 N, float eta){ float c = -dot(N, I), k = 1.0 - eta*eta*(1.0 - c*c); return k < 0.0 ? vec3(0.0) : eta*I + (eta*c - sqrt(k))*N; }
+float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)))*43758.5453); }
+void main(){
+  vec2 p = vec2((vUV.x*2.0 - 1.0)*uA, vUV.y*2.0 - 1.0);
+  float jit = hash(gl_FragCoord.xy) - 0.5;
+  vec3 acc = vec3(0.0);
+  // ---- diffraction grating: each order of each wavelength is a copy of the incoming image, thrown sideways ----
+  if (uGr.x > 0.0){
+    const int NL = 16;
+    if (uGrCirc == 1){
+      // concentric grooves: every direction at once, so each wavelength makes a ring round every bright thing
+      const int NP = 28;
+      for (int m = 1; m <= 2; m++){
+        float eff = m == 1 ? 0.10 : 0.03;
+        for (int k = 0; k < NL; k++){
+          float lam = 0.42 + 0.24*(float(k) + 0.5 + jit)/float(NL);
+          float sr = throwS(float(m), lam); if (sr < 0.0) continue;
+          float dsp = max(sr*0.24/float(NL)/lam, 6.2831853*sr/float(NP));
+          vec3 ring = vec3(0.0);
+          for (int a = 0; a < NP; a++){
+            float ph = 6.2831853*(float(a) + 0.5)/float(NP) + float(k)*2.39996 + jit;
+            ring += Eat(p - sr*vec2(cos(ph), sin(ph)), max(dsp, uGr.w));
+          }
+          acc += ring/float(NP)*specRGB(lam*1000.0)*eff;
+        }
+      }
+      acc *= uWB6/float(NL);
+    } else {
+      // straight grooves on uGrN axes (a cross is two, star filters three or four): orders 1-3 either side
+      vec3 g = vec3(0.0);
+      for (int ax = 0; ax < 4; ax++){
+        if (ax >= uGrN) break;
+        float r = uGr.z + 3.1415927*float(ax)/float(uGrN);
+        vec2 dir = vec2(cos(r), sin(r));
+        for (int m = 1; m <= 3; m++){
+          float eff = (m == 1 ? 0.10 : (m == 2 ? 0.025 : 0.008))/float(uGrN);   // the sets of grooves share the light
+          for (int k = 0; k < NL; k++){
+            float lam = 0.42 + 0.24*(float(k) + 0.5 + jit)/float(NL);
+            float sr = throwS(float(m), lam); if (sr < 0.0) continue;
+            float dsp = sr*0.24/float(NL)/lam;
+            g += (Eat(p - dir*sr, max(dsp, uGr.w)) + Eat(p + dir*sr, max(dsp, uGr.w)))*specRGB(lam*1000.0)*eff;
+          }
+        }
+      }
+      acc += g*uWB6/float(NL);
+    }
+    acc *= uGr.x;
+  }
+  // ---- prism at the lens: the whole view behind it, bent wavelength by wavelength (traced back through the prism) ----
+  if (uPrOn == 1){
+    float A = uPrG.x, tau = uPrG.y; vec2 e = vec2(cos(uPrG.z), sin(uPrG.z));
+    float p1 = A*0.5 + tau, p2 = A*0.5 - tau;
+    vec3 nIn = vec3(e*sin(p1), -cos(p1)), nOut = vec3(-e*sin(p2), -cos(p2)), nB = vec3(e, 0.0);
+    // the prism is held at the lens and covers part of it; its edge is so far out of focus that the part of the frame
+    // seeing through it fades in over a wide soft band
+    vec2 pn = vec2(p.x/uA, p.y);
+    float edge = 1.0 - 2.0*uPrC.x, sft = 0.05 + uPrC.y*0.9;
+    float cov = smoothstep(edge - sft, edge + sft, dot(pn, -e));
+    if (cov > 0.0){
+      vec3 ko = normalize(vec3(-p*uTanV, 1.0));
+      vec3 pr = vec3(0.0);
+      for (int k = 0; k < 12; k++){
+        float n = uPn[k], lam = 0.42 + 0.02*(float(k) + 0.5 + jit);
+        // reversed: back in through the exit face, out through the entry face
+        vec3 t1 = refr(-ko, -nOut, 1.0/n);
+        if (dot(t1, t1) < 0.5) continue;
+        vec3 vc = specRGB(lam*1000.0);
+        vec3 t2 = refr(normalize(t1), -nIn, n);
+        if (dot(t2, t2) > 0.5 && t2.z < -0.05){
+          vec3 ki = -t2; vec2 q = vec2(-ki.x/ki.z, -ki.y/ki.z)/uTanV;
+          pr += Eat(q, max(0.004, uPrG.w))*vc*0.92;
+        }
+        // and off the base on the way: a second, more strongly bent copy (total internal reflection when it is steep)
+        if (uPrC.w > 0.0){
+          vec3 tb = reflect(normalize(t1), nB);
+          float cb = abs(dot(normalize(t1), nB)), sb2 = 1.0 - cb*cb;
+          float Rb = n*n*sb2 >= 1.0 ? 1.0 : 0.04 + 0.96*pow(1.0 - cb, 5.0);
+          vec3 t3 = refr(tb, -nIn, n);
+          if (dot(t3, t3) > 0.5 && t3.z < -0.05){
+            vec3 ki = -t3; vec2 q = vec2(-ki.x/ki.z, -ki.y/ki.z)/uTanV;
+            pr += Eat(q, max(0.004, uPrG.w))*vc*Rb*0.9*uPrC.w;
+          }
+        }
+      }
+      acc += pr*uWB6/12.0*cov*uPrC.z;
+    }
+  }
+  o = vec4(min(acc, vec3(3.0e4)), 1.0);
+}`;
+const FS_TADD = `#version 300 es
+precision highp float;
+in vec2 vUV; out vec4 o; uniform sampler2D uT;
+void main(){ o = vec4(texture(uT, vUV).rgb, 1.0); }`;
 /* with a shot loaded: is the light in front of whatever the camera sees at this point of the frame? */
 const SHOTVIS = `
 uniform float uShot, uShotAsp; uniform sampler2D uGP; uniform float uLd[4];
@@ -2212,14 +2371,6 @@ void main(){
     {
       vec3 Ls = (uMatte > 0.5 ? uLf[i] : uLc[i])*vis*uKF;   // the matte box flags cut light from outside the frame
       if (uBrK > 0.0) acc += Ls*uBrK*strayEdge(p, uLp[i]);
-      if (uGr.x > 0.0) acc += uLf[i]*vis*uKF*gratingFX(p, uLp[i], uLsz[i]);
-      if (uPrAmt > 0.0){
-        vec3 Lq = (uMatte > 0.5 ? uLf[i] : uLc[i])*vis;
-        acc += Lq*prismFX(p, i);
-        // the lens scatters the prism's image of the light like any other: its own glare tail
-        vec3 q = uPrP[i*12 + 6];
-        if (q.z > 0.0){ vec2 dq = p - q.xy; acc += Lq*uKE*uTail*pow(1.0 + dot(dq, dq)/(uGsp[i].z*uGsp[i].z), -1.3)*uGsp[i].w*q.z*uPrAmt*uPrE.z*uVeilTint; }
-      }
     }
     if (uRb.x + uRb.y + uRb.z > 0.0) acc += uLf[i]*vis*rainbowFX(p, uLp[i], float(i)*1.37 + 0.41);
     if (uLeakMode > 0.5 && uLeakMode < 2.5) acc += gapLeak(p, uLp[i], uLc[i]*vis, uTime, float(i)*7.3 + 1.0)*uLeak;
@@ -2901,13 +3052,15 @@ function program(vs, fs){
   return { p, u };
 }
 let P;
+const P_TR = () => P.tre, P_TA = () => P.tadd, PROG_TRK = () => P.trk;
 try {
   P = {
     scene: program(VS_FULL, FS_SCENE), vis: program(VS_FULL, FS_VIS), sbright: program(VS_FULL, FS_SBRIGHT), sflare: program(VS_FULL, FS_SFLARE),
     trace: program(VS_FULL, FS_TRACE), gdraw: program(VS_GDRAW, FS_GDRAW), gprep: program(VS_FULL, FS_GPREP), pdiff: program(VS_STAR, FS_PDIFF), gscat: program(VS_FULL, FS_GSCAT), gblur: program(VS_FULL, FS_GBLUR),
     down: program(VS_FULL, FS_DOWN), up: program(VS_FULL, FS_UP),
     ghost: program(VS_GHOST, FS_GHOST), star: program(VS_STAR, FS_STAR), red: program(VS_RED, FS_RED),
-    streak: program(VS_FULL, FS_STREAK), veil: program(VS_FULL, FS_VEIL), comp: program(VS_FULL, FS_COMP)
+    streak: program(VS_FULL, FS_STREAK), veil: program(VS_FULL, FS_VEIL), comp: program(VS_FULL, FS_COMP),
+    tre: program(VS_FULL, FS_TRICKE), trk: program(VS_FULL, FS_TRICK), tadd: program(VS_FULL, FS_TADD)
   };
 } catch (e){ console.error(e); fail('The flare shaders could not compile on this GPU. Try a different browser.'); return; }
 
@@ -2957,7 +3110,11 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 16, 4, 0, gl.RED, gl.UNSIGNED_BYTE, flick
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 let sceneRT, flareRT, ghostRT, ghostLoRT, accRT, brightRT, sflareRT, bloom = [];
+let trickERT = null, trickRT = null;
 function allocTargets(w, h){
+  freeRT(trickERT); freeRT(trickRT);
+  trickERT = makeRT(Math.max(8, Math.round(w/2)), Math.max(8, Math.round(h/2))); trickRT = makeRT(Math.max(8, Math.round(w/2)), Math.max(8, Math.round(h/2)));
+  gl.bindTexture(gl.TEXTURE_2D, trickERT.t); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   freeRT(sceneRT); freeRT(flareRT); freeRT(ghostRT); freeRT(ghostLoRT); freeRT(accRT); freeRT(brightRT); freeRT(sflareRT); bloom.forEach(b => { freeRT(b.d); freeRT(b.u); });
   sceneRT = makeRT(w, h); flareRT = makeRT(w, h); ghostRT = makeRT(w, h); ghostLoRT = makeRT(Math.max(1, w >> 1), Math.max(1, h >> 1)); accRT = makeRT(w, h); brightRT = makeRT(Math.max(1, w >> 1), Math.max(1, h >> 1)); sflareRT = makeRT(Math.max(1, w >> 1), Math.max(1, h >> 1)); bloom = []; traceCacheSig = ''; allocMSAA(w, h);
   for (const r of [ghostRT, ghostLoRT, accRT, brightRT]){ gl.bindTexture(gl.TEXTURE_2D, r.t); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); }
@@ -3166,8 +3323,8 @@ const state = {
   focus: Infinity, autoFocus: true, iris: 'lens', smear: 'none', leak: 'off', haze: 0, showSet: true, showSrc: true,
   plateEV: 0, pan: 0, tilt: 0, focal: null, compare: false, split: 0.5, shotKind: '', washSize: 1,
   layer: 'beauty', lightSolo: null, mixSolo: null, mixMute: {}, ghostOv: {}, ghostSolo: null,
-  coating: 'lens', grating: { mode: 'off', lpmm: 150, rot: 20, amt: 0.3 },
-  prism: { on: false, glass: 'SF11', apex: 30, rot: 200, tilt: 0, cov: 0.5, soft: 0.1, amt: -8 }, free: { tilt: 0, dir: 30 },
+  coating: 'lens', grating: { mode: 'off', lpmm: 150, rot: 20, amt: 1, soft: 0.2 },
+  prism: { on: false, glass: 'SF11', apex: 30, rot: 200, tilt: 0, cov: 0.5, soft: 0.5, blur: 0.3, spread: 2, refl: 0.5, amt: -2 }, free: { tilt: 0, dir: 30 },
   screen: { on: true, thr: 3, amount: 1, ghosts: 1, hold: true },
   comps: { ghosts: true, star: true, streak: true, veil: true, dirt: true, bloom: true, barrel: true, sensor: false },
   master: 0.2,
@@ -4012,7 +4169,7 @@ function renderCore(t){
     });
   }
   const rbOn = (MX.rring || 0) + (MX.rrays || 0) + (MX.rspill || 0) > 0;
-  const tricksOn = layerTricks() && (state.grating?.mode !== 'off' || state.prism?.on || (state.free?.tilt || 0) > 0);
+  const tricksOn = layerTricks() && (state.free?.tilt || 0) > 0;
   if (state.comps.veil || state.comps.dirt || state.comps.barrel || state.leak !== 'off' || rbOn || tricksOn){
     const v = P.veil; gl.useProgram(v.p);
     gl.uniform3fv(v.u.uLe, arrLe); gl.uniform1f(v.u.uTime, t);
@@ -4053,6 +4210,7 @@ function renderCore(t){
     full();
   }
   gl.disable(gl.BLEND);
+  runTricks(L, A, MS);
 
   // 6. camera response
   target(null); const c = P.comp; gl.useProgram(c.p);
@@ -5440,6 +5598,50 @@ function prismTrace(fx, fy, tv){
 }
 /* how far the prism bends an on-axis light (degrees), for the panel */
 function prismBend(){ const tv = viewTanV(), q = prismTrace(0, 0, tv), ang = i => q[i*3 + 2] > 0 ? Math.atan(Math.hypot(q[i*3], q[i*3 + 1])*tv)*180/Math.PI : NaN; return [ang(11), ang(0)]; }
+const GRAT_AXES = { lines: 1, cross: 2, star6: 3, star8: 4 };
+const TRICK_M = 2.5;   // the field gathered for the filters, in frame heights either side: lights this far out still count
+function runTricks(L, A, MS){
+  const G = state.grating || {}, P = state.prism || {};
+  const gOn = G.mode && G.mode !== 'off', pOn = !!P.on;
+  if (!layerTricks() || !(gOn || pOn) || !trickERT) return;
+  const tv = viewTanV();
+  // 1. the incoming image, scene and flare so far, plus the tagged lights the frame does not show
+  gl.disable(gl.BLEND);
+  const e = P_TR(); gl.useProgram(e.p); target(trickERT);
+  bindTex(0, sceneRT.t); bindTex(1, flareRT.t); bindTex(2, visRT.t);
+  gl.uniform1i(e.u.uScene, 0); gl.uniform1i(e.u.uFlare, 1); gl.uniform1i(e.u.uVis, 2);
+  gl.uniform1f(e.u.uA, A); gl.uniform1f(e.u.uM, TRICK_M); gl.uniform1f(e.u.uShowSrc, state.showSrc && state.showSet !== false ? 1 : 0);
+  gl.uniform1f(e.u.uPx, 2*TRICK_M/trickERT.h); gl.uniform2f(e.u.uTx, 0.5*TRICK_M/trickERT.w, 0.5*TRICK_M/trickERT.h);   // half an E texel, in frame uv
+  const lp = new Float32Array(16), le = new Float32Array(12);
+  derived.forEach((d, i) => { lp.set([d.sx, d.sy, d.kind ? Math.sqrt(d.ex*d.ey) : d.size, state.matte ? d.atten : 1], i*4); le.set(d.col.map(c => c*2*Math.PI*d.srcFlux*(d.flux > 0 ? 1 : 0)), i*3); });
+  gl.uniform1i(e.u.uN, derived.length); gl.uniform4fv(e.u.uLp, lp); gl.uniform3fv(e.u.uLe, le);
+  full();
+  gl.bindTexture(gl.TEXTURE_2D, trickERT.t); gl.generateMipmap(gl.TEXTURE_2D);
+  // 2. the copies
+  const t = PROG_TRK(); gl.useProgram(t.p); target(trickRT);
+  bindTex(0, trickERT.t); gl.uniform1i(t.u.uE, 0);
+  gl.uniform1f(t.u.uA, A); gl.uniform1f(t.u.uM, TRICK_M); gl.uniform1f(t.u.uTanV, tv);
+  gl.uniform1f(t.u.uTexU, trickERT.h/(2*TRICK_M)); gl.uniform1f(t.u.uLodMax, Math.floor(Math.log2(Math.max(trickERT.w, trickERT.h))));
+  gl.uniform3f(t.u.uWB6, SPEC_WB[0]*6, SPEC_WB[1]*6, SPEC_WB[2]*6);
+  // Softness: a frosted or dirty filter, or haze, spreads each copy (it reads the incoming image more blurred)
+  gl.uniform4f(t.u.uGr, gOn ? (G.amt ?? 1) : 0, 1000/(G.lpmm || 150), (G.rot || 0)*Math.PI/180, (G.soft || 0)*0.2);
+  gl.uniform1i(t.u.uGrN, GRAT_AXES[G.mode] || 1); gl.uniform1i(t.u.uGrCirc, G.mode === 'circular' ? 1 : 0);
+  gl.uniform1i(t.u.uPrOn, pOn ? 1 : 0);
+  if (pOn){
+    const g = GLASS_CAT[(PRISM_GLASS[P.glass] || PRISM_GLASS.SF11)[1]], pn = new Float32Array(12);
+    const nd = sellmeier(g, 0.5876), sp = P.spread ?? 1;
+    for (let k = 0; k < 12; k++) pn[k] = nd + (sellmeier(g, 0.42 + 0.02*(k + 0.5)) - nd)*sp;   // Colour spread: 1x is the real glass
+    gl.uniform1fv(t.u.uPn, pn);
+    gl.uniform4f(t.u.uPrG, P.apex*Math.PI/180, P.tilt*Math.PI/180, P.rot*Math.PI/180, (P.blur || 0)*0.35);
+    gl.uniform4f(t.u.uPrC, P.cov ?? 0.5, P.soft ?? 0.5, Math.pow(2, P.amt ?? -2), P.refl ?? 0.5);
+  }
+  full();
+  // 3. added to the flare
+  target(flareRT); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+  const ad = P_TA(); gl.useProgram(ad.p); bindTex(0, trickRT.t); gl.uniform1i(ad.u.uT, 0);
+  full();
+  gl.disable(gl.BLEND);
+}
 function trickUniforms(v, L, MS, MX, AX){
   const tv = viewTanV();
   gl.uniform1f(v.u.uTanV, tv); gl.uniform1f(v.u.uKF, 2*Math.PI*K_TRACE*MS); gl.uniform3f(v.u.uWBn, SPEC_WB[0]*6, SPEC_WB[1]*6, SPEC_WB[2]*6);
@@ -5473,18 +5675,19 @@ function trickUniforms(v, L, MS, MX, AX){
 function syncTricks(){
   const G = state.grating, P = state.prism, F = state.free;
   const setSeg = (id, val) => { const i = $(id).querySelector(`input[value="${val}"]`); if (i) i.checked = true; };
-  setSeg('#coatSeg', state.coating); setSeg('#gratSeg', G.mode);
+  setSeg('#coatSeg', state.coating); $('#gratSel').value = G.mode || 'off';
   $('#gratCtl').hidden = G.mode === 'off';
   $('#gratD').value = Math.round(100*Math.log(G.lpmm/20)/Math.log(30)); $('#gratDOut').textContent = Math.round(G.lpmm) + '/mm';
   $('#gratRot').value = G.rot; $('#gratRotOut').textContent = Math.round(G.rot) + '°';
   $('#gratAmt').value = G.amt; $('#gratAmtOut').textContent = (+G.amt).toFixed(2) + '×';
+  $('#gratSoft').value = G.soft || 0; $('#gratSoftOut').textContent = (+(G.soft || 0)).toFixed(2);
   $('#prismOn').checked = !!P.on; $('#prismCtl').hidden = !P.on;
   $('#prismGlass').value = P.glass;
   const rows = [['prismA', 'apex', v => Math.round(v) + '°'], ['prismRot', 'rot', v => Math.round(v) + '°'], ['prismTilt', 'tilt', v => (v > 0 ? '+' : '') + Math.round(v) + '°'],
-    ['prismCov', 'cov', v => Math.round(v*100) + '%'], ['prismSoft', 'soft', v => (+v).toFixed(2)], ['prismAmt', 'amt', v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + ' st']];
+    ['prismCov', 'cov', v => Math.round(v*100) + '%'], ['prismSoft', 'soft', v => (+v).toFixed(2)], ['prismBlur', 'blur', v => (+v).toFixed(2)], ['prismSpread', 'spread', v => (+v).toFixed(v < 10 ? 2 : 1).replace(/\.?0+$/, '') + '×' + (+v === 1 ? ' (real glass)' : '')], ['prismRefl', 'refl', v => (+v).toFixed(2)], ['prismAmt', 'amt', v => (v < 0 ? '−' : v > 0 ? '+' : '±') + Math.abs(v).toFixed(2).replace(/0$/, '') + ' st']];
   rows.forEach(([id, k, f]) => { $('#' + id).value = P[k]; $('#' + id + 'Out').textContent = f(P[k]); });
   if (P.on){ const [a, b] = prismBend(); $('#prismInfo').textContent = isFinite(a) && isFinite(b)
-    ? `Bends light about ${a.toFixed(1)}° (red) to ${b.toFixed(1)}° (violet). Its images move toward the Rotation direction, so a light that far outside the frame on the opposite side is pulled into the picture.`
+    ? `Bends light about ${a.toFixed(1)}° (red) to ${b.toFixed(1)}° (violet). Everything seen through it moves toward the Rotation direction and splits into colour; a light that far outside the frame on the opposite side is pulled in. Covers sets how much of the frame looks through it.`
     : 'At this tilt some colours are totally reflected inside the prism and never reach the lens.'; }
   $('#freeTilt').value = F.tilt; $('#freeTiltOut').textContent = (+F.tilt).toFixed(1) + '°';
   $('#freeDir').value = F.dir; $('#freeDirOut').textContent = Math.round(F.dir) + '°';
@@ -5493,14 +5696,15 @@ function syncTricks(){
 {
   const bump = () => { needsFrame = true; };
   seg($('#coatSeg'), 'coating', [['lens', 'As designed'], ['single', 'Single-coated'], ['uncoated', 'Uncoated']], state.coating, v => { state.coating = v; traceCacheSig = ''; bump(); });
-  seg($('#gratSeg'), 'gratmode', [['off', 'Off'], ['lines', 'Lines'], ['cross', 'Cross']], state.grating.mode, v => { state.grating.mode = v; syncTricks(); bump(); });
+  $('#gratSel').addEventListener('change', e => { state.grating.mode = e.target.value; syncTricks(); bump(); });
   $('#gratD').addEventListener('input', e => { state.grating.lpmm = 20*Math.pow(30, +e.target.value/100); syncTricks(); });
   $('#gratRot').addEventListener('input', e => { state.grating.rot = +e.target.value; syncTricks(); });
   $('#gratAmt').addEventListener('input', e => { state.grating.amt = +e.target.value; syncTricks(); });
+  $('#gratSoft').addEventListener('input', e => { state.grating.soft = +e.target.value; syncTricks(); });
   $('#prismOn').addEventListener('change', e => { state.prism.on = e.target.checked; syncTricks(); });
   $('#prismGlass').innerHTML = Object.entries(PRISM_GLASS).map(([k, [n]]) => `<option value="${k}">${n}</option>`).join('');
   $('#prismGlass').addEventListener('change', e => { state.prism.glass = e.target.value; syncTricks(); });
-  [['prismA', 'apex'], ['prismRot', 'rot'], ['prismTilt', 'tilt'], ['prismCov', 'cov'], ['prismSoft', 'soft'], ['prismAmt', 'amt']]
+  [['prismA', 'apex'], ['prismRot', 'rot'], ['prismTilt', 'tilt'], ['prismCov', 'cov'], ['prismSoft', 'soft'], ['prismBlur', 'blur'], ['prismSpread', 'spread'], ['prismRefl', 'refl'], ['prismAmt', 'amt']]
     .forEach(([id, k]) => $('#' + id).addEventListener('input', e => { state.prism[k] = +e.target.value; syncTricks(); }));
   $('#freeTilt').addEventListener('input', e => { state.free.tilt = +e.target.value; syncTricks(); });
   $('#freeDir').addEventListener('input', e => { state.free.dir = +e.target.value; syncTricks(); });
@@ -5806,7 +6010,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 54;
+const APP_VERSION = 55;
 /* ---- layer view ---- */
 function setLayer(v){ state.layer = v; $('#layerSel').value = v; needsFrame = true; }
 $('#layerSel').addEventListener('change', e => setLayer(e.target.value));
