@@ -26,9 +26,12 @@ realistic by default, quick to direct, and driven by real shot data rather than 
   the way a renderer would write it. For testing, utility EXRs can be dropped on the frame; `examples/` has two.
 - **Made for comp.** Turn off **Sources** under the frame to see the flare alone, as it would go over a render, and
   **Handles** to hide the light markers. **+ Add light** (or `A`) opens the light picker; `Delete` removes a light.
-- **Rainbow flares.** Art-directed **Rainbow arcs**, **Rainbow rays** and **Prism spill** in the mixer, for the huge
-  rainbow rings, streaky rainbow fans and washes of spectrum that filters, prisms and crystals in front of the lens
-  throw, with a shared size control, in any flare model.
+- **Lens tricks, simulated.** What cinematographers do to a lens to make it flare more, each from the physics:
+  re-coat the lens single-coated or uncoated (thin-film reflectance on every surface), a diffraction grating filter
+  (sin θ = mλ/d, orders 1–3), a prism held at the lens (Snell's law per wavelength through real catalogue glass), and
+  free-lensing (the optical axis tilted off the frame centre, with a light leak). Light grazing the barrel baffles and
+  the front element's bevel is simulated as non-sequential stray light. **Rainbow arcs** in the mixer stays as an
+  art-directed element for huge soft rainbow rings.
 - **Before/after wipe**, a **present mode** (press `P`), **Reset all**, and **Share a look**, which saves every setting
   to one file.
 
