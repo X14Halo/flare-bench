@@ -151,7 +151,33 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outlin
 .lights{display:flex;flex-direction:column;gap:6px}
 .light-item{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:11px;align-items:center;padding:8px 11px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--fg);text-align:left;cursor:pointer;font:inherit;font-size:13px}
 .light-item[aria-pressed="true"]{border-color:var(--accent);background:var(--surface-2)}
-.light-row{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:4px;align-items:stretch}
+.light-row{display:grid;grid-template-columns:minmax(0,1fr) 24px 24px 30px;gap:4px;align-items:stretch}
+.sm{background:transparent;border:1px solid var(--line);border-radius:6px;color:var(--muted);font:500 10.5px/1 var(--f-mono);cursor:pointer;padding:0}
+.sm:hover{border-color:var(--accent);color:var(--fg)}
+.sm[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.sm.mute[aria-pressed="true"]{background:var(--tally);border-color:var(--tally);color:var(--bg)}
+.row.mix.sm2{grid-template-columns:104px minmax(0,1fr) 40px 40px}
+.smp{display:flex;gap:3px}.smp .sm{width:18px;height:18px}
+.vtog select{font:inherit;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 8px;cursor:pointer}
+.vtog .ab{min-width:26px}
+.vtog .ab.has{color:var(--fg)}
+.vtog .ab[aria-pressed="true"]{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.pin{position:sticky;top:-22px;z-index:5;background:var(--surface);margin:-6px -20px 0;padding:10px 20px;border-bottom:1px solid var(--line)}
+.pin .row{margin:0}
+.group > h2{cursor:pointer;user-select:none;justify-content:flex-start;gap:2px}
+.group > h2 small{margin-left:auto}
+.ghostpop{position:absolute;z-index:7;width:260px;background:rgba(18,19,22,.94);border:1px solid var(--line);border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--fg);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.ghostpop h4{margin:0 0 4px;font:500 12px var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+.ghostpop p{margin:0 0 8px;color:var(--muted);font-size:11.5px;line-height:1.4}
+.ghostpop .row{grid-template-columns:62px minmax(0,1fr) 46px}
+.ghostpop .btns{display:flex;gap:6px;margin-top:8px}
+.ghostpop .x{position:absolute;top:6px;right:8px;background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px}
+body.picking .viewport{cursor:crosshair}
+#xray{width:100%;height:auto;display:block;background:#0c0d0f;border:1px solid var(--line);border-radius:7px}
+.group > h2::before{content:'▾';display:inline-block;width:14px;color:var(--muted);transition:transform .15s}
+.group.collapsed > h2::before{transform:rotate(-90deg)}
+.group.collapsed > :not(h2){display:none !important}
+.osd .layer-tag{color:var(--bg);background:var(--accent);padding:0 6px;border-radius:3px;font-weight:500;line-height:18px}
 .light-x{background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;padding:0}
 .light-x:hover{color:var(--fg);border-color:var(--tally)}
 .lights-g .add .btn#addLight{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
@@ -215,8 +241,9 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <div class="empty-g" id="quickAdd"></div>
         <p class="empty-s" hidden>Or load a plate and let its bright areas flare on their own.</p>
       </div>
-      <div class="hint" id="hint">Drag a light · click to move the selected one · <kbd>A</kbd> add · <kbd>Del</kbd> remove · <kbd>H</kbd> handles</div>
+      <div class="hint" id="hint">Drag a light · <kbd>Shift</kbd>-click to move the selected one there · <kbd>A</kbd> add · <kbd>Del</kbd> remove · <kbd>H</kbd> handles</div>
       <p class="gl-error" id="glError" hidden></p>
+      <div class="ghostpop" id="ghostPop" hidden></div>
     </div>
     <div class="osd">
       <span><b id="osdT">T2.8</b></span>
@@ -224,7 +251,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <span class="opt" id="osdShutter">180.0°</span>
       <span id="osdIso">EI 800</span>
       <span id="osdEv">±0.0 EV</span>
-      <span class="vtog"><button type="button" class="addl" id="tgAdd" title="Add a flare light (A)">+ Add light</button><button type="button" id="tgHandles" aria-pressed="true" title="Show or hide the light handles (H)">Handles</button><button type="button" id="tgSrc" aria-pressed="true" title="Show or hide the light sources themselves; the flare stays">Sources</button></span>
+      <span class="vtog"><button type="button" class="addl" id="tgAdd" title="Add a flare light (A)">+ Add light</button><button type="button" id="tgHandles" aria-pressed="true" title="Show or hide the light handles (H)">Handles</button><button type="button" id="tgSrc" aria-pressed="true" title="Show or hide the light sources themselves; the flare stays">Sources</button><select id="layerSel" aria-label="View layer" title="View one layer of the flare, as the Nuke node would output it (1-5)"><option value="beauty">1 Beauty</option><option value="flare">2 Flare only</option><option value="ghosts">3 Ghosts</option><option value="star">4 Star + streak</option><option value="glare">5 Glare</option></select><button type="button" class="ab" id="abA" aria-pressed="true" title="Look A. Click the other slot to compare; X swaps">A</button><button type="button" class="ab" id="abB" aria-pressed="false" title="Look B: a second set of look settings on the same shot and lights (X swaps)">B</button></span>
       <span class="opt" id="osdFilter">No filter</span>
       <span id="osdK">4300K</span>
     </div>
@@ -248,6 +275,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <input type="file" id="importFile" accept=".json,application/json" hidden>
       <p class="sub" id="importMsg" role="status"></p>
     </header>
+    <div class="pin" id="pinBar"><div class="row big"><label for="master">Flare amount</label><input type="range" id="master" min="0" max="100" step="1"><output id="masterOut" for="master"></output></div></div>
 
     <section class="group lights-g" id="lightsGroup">
       <h2>Flare lights <small id="lightCount">0 / 4</small></h2>
@@ -314,16 +342,24 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <p class="sub" id="scrInfo"></p>
     </section>
 
+
     <section class="group">
       <h2>Look</h2>
-      <div class="row big"><label for="master">Flare amount</label><input type="range" id="master" min="0" max="100" step="1"><output id="masterOut" for="master"></output></div>
       <div class="seg" role="radiogroup" aria-label="Flare model" id="modeSeg"></div>
       <p class="sub" id="modeInfo"></p>
       <div class="field" id="qualField"><span>Ray density</span><select id="quality" aria-label="Ray density"><option value="32">Draft · 48 ghost paths · 32×32 rays</option><option value="48">Standard · 64 paths · 48×48 rays · refines ×3</option><option value="64" selected>High · 96 paths · 64×64 rays · refines ×6</option><option value="80">Ultra · 128 paths · 80×80 rays · refines ×8</option><option value="128">Extreme · 128 paths · 128×128 rays · refines ×12</option></select></div>
       <h3 class="sub-h">Elements</h3>
       <div id="mixRows"></div>
       <div class="row mix" title="How big the rainbow arcs are"><label for="washSize">Arc size</label><input type="range" id="washSize" min="0.4" max="2.5" step="0.05" value="1"><output id="washSizeOut" for="washSize">1.00×</output></div>
-      <div class="add"><button type="button" class="btn" id="mixReset">Reset elements</button></div>
+      <div class="add"><button type="button" class="btn" id="mixReset">Reset elements</button><button type="button" class="btn" id="pickGhost" title="Click a ghost in the frame to see where it comes from and change just that one (Ray-traced and Hybrid)">Pick a ghost</button></div>
+      <p class="sub" id="ghostOvInfo"></p>
+    </section>
+
+    <section class="group" id="xrayGroup">
+      <h2>Lens X-ray</h2>
+      <p class="sub">The lens in cross-section with live rays from the selected light: the image rays in its colour, and in amber the ghost you picked (or the strongest one) bouncing between its two surfaces.</p>
+      <canvas id="xray" width="640" height="300" aria-label="Lens cross-section with traced rays"></canvas>
+      <p class="sub" id="xrayInfo"></p>
     </section>
 
     <section class="group" id="tricksGroup">
@@ -385,7 +421,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
     <details class="read">
       <summary>How it works</summary>
       <dl>
-        <dt>Flare lights</dt><dd>Only the lights an artist tags flare: the sun, a headlight, a stage spot. Each flares from its real position, size, colour, brightness and beam direction, and has its own flare gain, so a light can flare more or less without relighting the shot. Lights just past the frame edge still flare, pouring glare and barrel reflections in from that side, as on set. Add a light with <b>+ Add light</b> under the frame (or press <kbd>A</kbd>), or from the Flare lights group at the top of the panel; drag it to place it; remove it with its × or <kbd>Delete</kbd>. A shot takes up to four.</dd>
+        <dt>Flare lights</dt><dd>Only the lights an artist tags flare: the sun, a headlight, a stage spot. Each flares from its real position, size, colour, brightness and beam direction, and has its own flare gain, so a light can flare more or less without relighting the shot. Lights just past the frame edge still flare, pouring glare and barrel reflections in from that side, as on set. Add a light with <b>+ Add light</b> under the frame (or press <kbd>A</kbd>), or from the Flare lights group at the top of the panel; drag its handle to place it, or <kbd>Shift</kbd>-click the frame to move the selected light there (a plain click never moves a light); remove it with its × or <kbd>Delete</kbd>. A shot takes up to four. <b>S</b> solos a light's flare and <b>M</b> mutes it; the light itself stays.</dd>
         <dt>Flare model</dt><dd>Ray-traced follows thousands of rays per ghost through each lens's surfaces, glass, anti-reflection coatings and iris, across the spectrum (Hullin et al., SIGGRAPH 2011), plus diffraction for the starburst and a scatter model for glare. Hybrid traces the ghosts and streak and hand-shapes the rest. Artistic is fully hand-shaped and fastest. The lens designs are real optical types matched to each lens family, not the makers' private prescriptions.</dd>
         <dt>Choosing a lens</dt><dd>The lenses are grouped by look, each tuned against real frames shot on the lenses named under it. Clean and large-format modern glass barely flares. Warm character lenses glow. Vintage glass throws bold coloured rings. Classic anamorphics give the thin blue streak and tall oval ghosts; modern anamorphics a paler streak and sideways pills. Cinema zooms sit close to modern primes. It opens on Large-format modern, the ARRI Signature Prime class of glass Roger Deakins shot <i>1917</i> on: clean, with almost no ghosts, which suits the restrained flares of modern features. The flare amount opens low for the same reason.</dd>
         <dt>Light sources</dt><dd>The list is kept to the lights that turn up in an animated feature and really flare: the sun, headlights, streetlights, stage spotlights, bare bulbs and flashlights, plus the three classic ways a crew aims a light into the lens from just off frame. Each is calibrated by how far above the exposure it really sits and by its real spectrum: the sun or a headlight aimed at the lens is many stops over and flares hard, and sodium streetlights barely streak through blue-coated anamorphic glass. Large soft sources, fire, neon and screens are left out on purpose: they glow rather than flare, which a glow or convolution in comp handles better.</dd>
@@ -396,6 +432,9 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Big soft rainbow flares</dt><dd>The huge rainbow arcs and washes of spectrum in many films come from things in front of the lens rather than the lens itself: gratings and prisms (both simulated under Lens tricks), crystals and textured glass, or a flat filter whose reflection off the front element makes a giant ring. <b>Rainbow arcs</b> in the mixer is the art-directed version of those huge soft rings, for when a look calls for one, with its own <b>Arc size</b>.</dd>
         <dt>Flicker</dt><dd>Sodium streetlights and bulbs on mains power pulse at twice the mains frequency, and LED headlights at their PWM rate; off-speed frame rates and shutters make them beat, and the rolling shutter turns that into bands.</dd>
         <dt>Using it in comp</dt><dd>The flare is meant to go over a render, where the light itself already exists. Turn off <b>Sources</b> under the frame to see the flare alone: the ghosts, star, streak and the glow the lens adds around the light, without the sun's disc or the bulb. <b>Handles</b> hides the light markers for a clean view, and Present (<kbd>P</kbd>) hides the panel.</dd>
+        <dt>Layers</dt><dd>The menu under the frame (or keys <kbd>1</kbd>–<kbd>5</kbd>) shows the layers the Nuke node would output, each over black: <b>Beauty</b>, <b>Flare only</b>, <b>Ghosts</b>, <b>Star + streak</b> and <b>Glare</b> (veil, dirt, barrel light and bloom). In the mixer, <b>S</b> solos an element and <b>M</b> mutes it, to find out what is making a particular shape.</dd>
+        <dt>Comparing looks</dt><dd><b>A</b> and <b>B</b> under the frame hold two sets of look settings (lens, T-stop, coatings, mixer, tricks) over the same shot and lights. The slot that is lit follows your changes; click the other one, or press <kbd>X</kbd>, to switch. <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Z</kbd> undoes the last 50 changes (<kbd>Shift</kbd> to redo), and double-clicking a slider puts it back to its default. Each panel section folds away with a click on its title; the flare amount stays pinned at the top.</dd>
+        <dt>Fixing one ghost</dt><dd>Physically driven by default, with a surgical override: <b>Pick a ghost</b> in the Look section, then click a ghost in the frame. The tool traces every ghost path to find the one under the cursor, names the two surfaces it bounces between and how much each reflects, and gives that path its own gain (down to off), tint and nudge, plus a solo to see it alone. It works on the traced ghosts (Ray-traced and Hybrid) and applies to that path's ghost from every light. <b>Lens X-ray</b> draws the lens in cross-section with live rays from the selected light: the image rays, and the picked (or strongest) ghost bouncing between its two surfaces, clipped where the real rims and iris clip it.</dd>
       </dl>
       <h3 class="how-h">Seeing it in the shot</h3>
       <p class="how-intro">The tool builds a rough model of the shot from the render's own utility pass, in a second or two, and the flare lights live inside it.</p>
@@ -411,15 +450,15 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <dl>
         <dt>1. Tag the light in Houdini</dt><dd>Lights get a <b>Flare</b> switch (a parameter on the studio's light asset) and an optional <b>flare gain</b> in stops. The sun is tagged by default; fill and cheat lights never are. That is the only thing a lighter has to do.</dd>
         <dt>2. The render carries everything</dt><dd>At render time the pipeline writes the shot camera (focal length, filmback, f-stop, focus distance, lens package; many renderers already put these in the EXR header) and, for every tagged light on every frame, its position in frame, distance, colour, intensity, size and how visible it is (a few rays toward each light, so the sun going behind a tree dims its flare) into the EXR's metadata. There are no locators to export or keep in sync: the data travels with the frames, so a re-render or a camera change updates the flare automatically. Big shaped lights can also get their own light-group pass, which the node reads as the light's real shape at whatever angle it is seen.</dd>
-        <dt>3. One node in comp</dt><dd>A single Flare node goes on the beauty. It reads the camera and the tagged lights from the metadata, sets the lens from the show's camera package, holds the tagged lights out of the screen flares so nothing flares twice, and outputs the flare as its own layers. The compositor only touches taste: the overall amount, a light's gain, the elements mix.</dd>
-        <dt>Why this way</dt><dd>It needs no new habits. Lighters already tag light groups and comp already reads EXR metadata, so the flare follows the real camera and lights with no hand-matching, and it stays right through every revision. A starting-point Houdini export for this prototype, which writes the camera and tagged lights to a file, is in the project's GitHub repository.</dd>
+        <dt>3. One node in comp</dt><dd>A single Flare node goes on the beauty. It reads the camera and the tagged lights from the metadata, sets the lens from the show's camera package, holds the tagged lights out of the screen flares so nothing flares twice, and outputs the flare as its own layers. The compositor only touches taste: the overall amount, a light's gain, the elements mix, and, when a director notes one ring on a face, that one ghost's gain, tint or position.</dd>
+        <dt>Why this way</dt><dd>It needs no new habits. Lighters already tag light groups and comp already reads EXR metadata, so the flare follows the real camera and lights with no hand-matching, and it stays right through every revision. A starting-point Houdini exporter is in the project's GitHub repository. It reads a Solaris stage (tags as <code>flare:enable</code>, <code>flare:type</code>, <code>flare:gain</code> attributes on any USD light; distances from the stage's own units) or old-style /obj lights, and writes each frame's camera and tagged lights into the rendered EXR's header as one <code>flare/shot</code> attribute. Drop such EXRs on the frame and the tool reads the lights straight from the header.</dd>
       </dl>
       <h3 class="how-h">Under the hood</h3>
       <p class="how-intro">None of the ghosts, rings or streaks in the traced modes are drawn shapes. They are what comes out the back of a simulated lens when light is sent through it. This is how.</p>
       <dl>
         <dt>A lens, as an optical prescription</dt><dd>Each lens family is a real optical design written the way a lens designer writes one: a table of surfaces, each with its radius of curvature, the spacing to the next, the glass's refractive index and Abbe number (its dispersion), its clear diameter, and where the iris sits. The spherical primes are built around a double-Gauss core. The anamorphics add a cylindrical front group, solved numerically to be afocal in one axis so it squeezes only horizontally. Digital bodies add the IR-cut filter, cover glass and sensor behind the lens, because they reflect light too. The designs represent each lens type; they are not the makers' private prescriptions.</dd>
         <dt>Paraxial optics</dt><dd>From that table the tool works out the focal length, back focus and entrance pupil: where the iris appears from the front, and how big. Anamorphics get this separately for each axis. Rays are aimed through that pupil, so stopping down really does shrink the bundle of light that gets in.</dd>
-        <dt>Where ghosts come from</dt><dd>A ghost is light that reflects twice inside the lens before it reaches the sensor: backwards off one surface, then forwards again off an earlier one. A lens with <i>N</i> surfaces has <i>N</i>(<i>N</i>−1)/2 such paths, so a 20-surface lens has 190. Each path is test-traced at several positions across the frame and ranked by how concentrated its light is, and the strongest 48 to 128 (set by Ray density) are kept. Paths with four or more reflections are dropped: each extra pair of reflections makes the light another 10,000 times or more dimmer. Lens designers also check where every ghost focuses and reshape the glass until none lands sharp on the sensor, where it would show as a crisp copy of the light mirrored through the centre. The lens models here are representative rather than optimised that way, so a path that would focus is given a designed lens's minimum blur, with its light kept, and an anamorphic line path that would draw a second streak across the frame is left out.</dd>
+        <dt>Where ghosts come from</dt><dd>A ghost is light that reflects twice inside the lens before it reaches the sensor: backwards off one surface, then forwards again off an earlier one. A lens with <i>N</i> surfaces has <i>N</i>(<i>N</i>−1)/2 such paths, so a 20-surface lens has 190. Each path is test-traced at several positions across the frame and ranked by how concentrated its light is, and the strongest 48 to 128 (set by Ray density) are kept. The ranking is done wide open and again three stops down, so a path that only shows once the iris closes (and stops clipping it) is not dropped. Paths with four or more reflections are dropped: each extra pair of reflections makes the light another 10,000 times or more dimmer. Lens designers also check where every ghost focuses and reshape the glass until none lands sharp on the sensor, where it would show as a crisp copy of the light mirrored through the centre. The lens models here are representative rather than optimised that way, so a path that would focus is given a designed lens's minimum blur, with its light kept, and an anamorphic line path that would draw a second streak across the frame is left out.</dd>
         <dt>Real ray tracing, on the graphics card</dt><dd>For every ghost path, a grid of up to 128×128 rays is spread evenly across the pupil (using an equal-area square-to-disc mapping) and traced through every surface. Each surface gets an exact ray–sphere or ray–cylinder intersection and Snell's law refraction, with mirror reflection at the path's two ghost surfaces. Rays that miss a surface, strike outside an element's rim, or totally internally reflect are lost, as they would be in real glass. Each ray is one pixel of a shader, so at the higher settings millions of rays are traced for every frame.</dd>
         <dt>Coatings and Fresnel reflection</dt><dd>At every surface, the fraction reflected is computed for each wavelength and angle. Bare glass and single- and two-layer coatings use the thin-film characteristic-matrix method, averaged over both polarisations. Modern broadband multicoats follow curves shaped like published reflectance data, including the faint residual colour (green, amber, violet) that tints each maker's ghosts. A ghost's brightness and colour are the product of its two reflecting surfaces and the transmission through every other surface on its path.</dd>
         <dt>Spectral, not RGB</dt><dd>Six wavelengths from 420 to 660 nm are traced separately, with each glass's index changing with wavelength, so ghosts fringe and rainbow the way real dispersion makes them. Every source has an emission spectrum: a blackbody for the sun and tungsten, line spectra for sodium and discharge lamps, narrow bands for LEDs. Each traced wavelength is turned into colour with the CIE 1931 colour-matching functions, and sub-bands interpolated between neighbouring wavelengths keep rainbow edges continuous.</dd>
@@ -431,12 +470,15 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Free-lensing</dt><dd>Holding a lens slightly off the mount tilts its optical axis, and every ghost lines up along the axis rather than the frame centre, so the whole flare swings off-centre. The tool moves the axis by the tilt angle through the focal length, traces the ghosts about the new axis, and lets light leak through the open gap between lens and body.</dd>
         <dt>From rays to an image</dt><dd>Each ghost's traced grid is drawn as a mesh of triangles. Brightness at any point is the light carried by the pupil cells around a ray divided by the area they land on. Where the mesh is squeezed, the ghost gets brighter, so the bright caustic rims, line ghosts and pinched shapes come straight out of the optics, as in Hullin et al. (SIGGRAPH 2011). The iris is applied per pixel from each ray's distance to the blade polygon, so every ghost carries the real iris shape, blade count and rotation.</dd>
         <dt>Clipped ghosts and off-frame light</dt><dd>Rays that pass outside an element's clear diameter are stopped. This is mechanical vignetting: near the frame edge it cuts ghosts into crescents and cat's eyes, and it lets a light outside the frame still throw ghosts into it. Both happen with real glass.</dd>
-        <dt>Sources with real size and distance</dt><dd>Lights are extended sources, not points. The sun covers its true half a degree, so the focal length sets exactly how big it is in frame. Several samples across each source soften every ghost by the source's size times that ghost's magnification, which is why sun ghosts look soft. A light at a finite distance sends diverging rays rather than parallel ones, which shifts and refocuses its ghosts. Brightness is set in stops above exposure from real-world luminances: the sun is about 11 stops over a daylight exposure, a headlight aimed at the lens about 10, a bare bulb about 7.</dd>
+        <dt>Sources with real size and distance</dt><dd>Lights are extended sources, not points. The sun covers its true half a degree, so the focal length sets exactly how big it is in frame. Every ghost is that source blurred by the source's size times the ghost's own magnification: how far the ghost moves when the light moves, measured for each ghost path from the lens itself. A ghost that nearly focuses barely moves and stays crisp; a big ghost moves more than the light and goes soft, which is why sun ghosts look the way they do. The magnification travels with each ghost's light, so the blur is set pixel by pixel. A light at a finite distance sends diverging rays rather than parallel ones, which shifts and refocuses its ghosts. Brightness is set in stops above exposure from real-world luminances: the sun is about 11 stops over a daylight exposure, a headlight aimed at the lens about 10, a bare bulb about 7.</dd>
         <dt>Focus and depth of field</dt><dd>Focusing moves the lens away from the sensor as a real focus mechanism does, so ghosts drift and change size as you rack focus ("flare breathing"). Out-of-focus sources get the thin-lens blur circle, (<i>f</i>²/<i>N</i>)·|1/<i>D</i> − 1/<i>F</i>|/2, squeezed horizontally on anamorphics.</dd>
         <dt>Manufacturing imperfections</dt><dd>Every element is given a small decentre, tilt and polishing error, so its ghosts never line up perfectly through the centre of frame.</dd>
-        <dt>Starburst from diffraction</dt><dd>The star is Fraunhofer diffraction from the iris. Each straight blade edge throws a spike at right angles to itself, so an even number of blades gives that many spikes and an odd number twice as many. The spikes are as wide as wavelength × f-number and fade as 1/<i>r</i>², and curved blades instead give a round halo that fades as 1/<i>r</i>³. That's why stopping down grows the star, and why it is slightly wider in red. The star keeps the same orientation wherever the light is, because the iris doesn't turn. Near the frame edges the lens rims crop the opening into a cat's eye: their curved edges throw no spikes, so the rays pointing toward the frame centre fade there.</dd>
+        <dt>Starburst from diffraction</dt><dd>The star is Fraunhofer diffraction from the lens opening as each light actually sees it. Far from a bright light, the diffraction of any opening is set by its outline: each straight edge throws a spike along its normal, with energy per unit length (edge length / opening area)·λ<i>N</i>/(2π²<i>x</i>²), and each curved stretch lights the directions its normals face with a halo falling as 1/<i>x</i>³, in proportion to its radius of curvature. So an even number of blades gives that many spikes and an odd number twice as many, stopping down grows the star, and red spikes are slightly wider. For each light the iris polygon (or its rounded version) is cut by the lens rims into the cat's eye it really sees off axis: blade edges that get shortened throw weaker spikes, ones cut away throw none, and the rim arcs add a halo across the cat's eye. The star keeps the same orientation wherever the light is, because the iris doesn't turn. A full numerical FFT of the opening was considered: at true scale the star's fine structure (fringes along each spike, a few micrometres apart) is far below one pixel of a cinema frame, and the visible far field is exactly what the outline gives.</dd>
         <dt>Glare and veiling haze</dt><dd>Micro-roughness on the glass and haze inside the lens scatter a small fraction of the light into a glare spread function, normalised so no energy is created. It is strong right beside the source and falls off slowly, about as 1/<i>r</i><sup>2.6</sup>, so a source as bright as the sun lifts the blacks and blooms a wide soft mass around itself, as real sun shots do. Each ghost also gets a soft halo scattered by its own coatings.</dd>
         <dt>Independent of screen size</dt><dd>Every size is worked out in fractions of the frame from the optics (the sun's angle, a ghost's magnification, the spread of the glare), not in screen pixels, so a small viewport shows the same flare as a 4K frame, with less detail. The only pixel limits are where nothing can be smaller than a pixel: star spikes are at least one pixel wide (with their light kept the same, so they get dimmer, not brighter) and the softening of a ghost is at least a few pixels.</dd>
+        <dt>Aiming rays where they count</dt><dd>For a light far off axis much of the lens opening is cut off by the rims and the iris, and the opening itself shifts ("pupil walking"), so rays spread over the whole on-axis pupil would mostly be wasted exactly where ghosts are clipped into crescents. Every ghost path first runs forward through the front of the lens to its first reflecting surface, so for each light the tool traces that shared stretch, finds the part of the opening that survives it, and spreads the whole ray grid over just that window (each ray then carries less of the opening's area). Crescent edges come out cleaner at the same ray count.</dd>
+        <dt>Foreground in front of the lens</dt><dd>Rays from different points of the lens opening travel toward the light a few millimetres apart. Something close to the camera (leaves in the foreground, a character passing the lens) blocks some of them and not others, so its silhouette shows inside the ghosts. In a shot, each traced ray is marched back toward the light through the shot's depth, and dropped if it passes behind a surface within 5 m of the camera; anything farther away dims the whole flare through the usual visibility.</dd>
+        <dt>Motion blur</dt><dd>When the camera moves during the shutter, everything on the light (its star, streak and glow) moves with it, but a ghost sitting at <i>k</i> times the light's position along the line through the lens axis moves <i>k</i> times as far, and the other way for ghosts across the centre. The flare is blurred along that line accordingly, separately from the scene.</dd>
         <dt>Converging like a path tracer</dt><dd>While the shot holds still, each new frame traces a fresh, rotated set of rays, source samples and wavelengths and averages it in. This is Monte Carlo accumulation, so a locked-off frame keeps refining toward a smooth result.</dd>
         <dt>Linear light throughout</dt><dd>Everything is computed in scene-referred linear light, in 16-bit floating-point buffers. The flare is added to the image the way a lens adds it, before the camera's response curve. Flare gain scales what the lens does with a light, not the light itself, as in Animal Logic's flare pass.</dd>
         <dt>What is tuned rather than derived</dt><dd>Some parts are modelled by hand: the Artistic flare model, the extra rainbow rings, the rainbow arcs, dust and smears on the front glass, light leaks, and the relative strength of glare and streak for each lens family. Those were matched by eye against real footage shot on the lenses each family is named after. In the Ray-traced model, the ghosts themselves come only from the optics.</dd>
@@ -834,7 +876,8 @@ function surfaceR(s, n1, n2, cos0, lam){
 }
 
 /* real ray trace. ga > gb are the two reflecting surfaces of a ghost path (-1 for the direct image). */
-function traceRay(S, sys, o, d, lam, ga, gb, stopR){
+function traceRay(S, sys, o, d, lam, ga, gb, stopR, upto = -1, path = null){
+  if (path) path.push([o[0], o[1], o[2]]);
   let p = o.slice(), dir = d.slice(), k = 0, step = 1, phase = ga < 0 ? 2 : 0, T = 1, maxRel = 0;
   for (let it = 0; it < 200; it++){
     if (k < 0 || k >= S.length) break;
@@ -854,9 +897,11 @@ function traceRay(S, sys, o, d, lam, ga, gb, stopR){
     }
     if (!(t > 1e-7)) return null;
     p = [p[0] + t*dir[0], p[1] + t*dir[1], p[2] + t*dir[2]];
+    if (path) path.push(p);
     const rr = Math.hypot(p[0], p[1]);
     if (s.sensor && phase === 2) return { x: p[0], y: p[1], T, maxRel };
     maxRel = Math.max(maxRel, s.stop ? rr/stopR : rr/s.h);
+    if (upto >= 0 && k >= upto) return { x: p[0], y: p[1], T, maxRel };
     if (s.stop){ k += step; continue; }
     let cd = nr[0]*dir[0] + nr[1]*dir[1] + nr[2]*dir[2];
     if (cd > 0){ nr = nr.map(v => -v); cd = -cd; }
@@ -875,9 +920,91 @@ function traceRay(S, sys, o, d, lam, ga, gb, stopR){
   }
   if (k !== S.length) return null;
   const t = (sys.zs - p[2])/dir[2];
+  if (path) path.push([p[0] + t*dir[0], p[1] + t*dir[1], sys.zs]);
   return { x: p[0] + t*dir[0], y: p[1] + t*dir[1], T, maxRel };
 }
 
+/* Pupil aiming. Rays are spread over the paraxial entrance pupil, but for a light far off axis much of that disc is cut
+   off by the element rims and the iris (and the pupil itself shifts, "pupil walking"), so many rays are wasted exactly
+   where ghosts are clipped into crescents. Every ghost path first runs forward through surfaces 0..a (a = its first
+   reflecting surface), so rays that do not get that far are lost for every ghost of the group. For each light, find the
+   part of the pupil that survives that common stretch and spread the ray grid over just that window (an ellipse round
+   the survivors' bounding box, with a margin); each ray then stands for less pupil area, which the tracer accounts for. */
+function pupilWindow(sys, d, upto, gs, stopR){
+  if (!(upto >= 0)) return [0, 0, 1, 1];
+  const N = 17, step = 2/(N - 1);
+  let n = 0, ns = 0, x0 = 9, x1 = -9, y0 = 9, y1 = -9;
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++){
+    const ux = -1 + i*step, uy = -1 + j*step;
+    if (ux*ux + uy*uy > 1.0001) continue;
+    n++;
+    const r = traceRay(sys.S, sys, rayOrigin(sys, d, ux, uy, gs), d, 0.55, -1, -1, stopR, upto);
+    if (!r || r.maxRel > 1) continue;
+    ns++; x0 = Math.min(x0, ux); x1 = Math.max(x1, ux); y0 = Math.min(y0, uy); y1 = Math.max(y1, uy);
+  }
+  if (!ns || ns > 0.8*n) return [0, 0, 1, 1];
+  const pad = step*1.2;
+  x0 = Math.max(-1, x0 - pad); x1 = Math.min(1, x1 + pad); y0 = Math.max(-1, y0 - pad); y1 = Math.min(1, y1 + pad);
+  const hx = (x1 - x0)/2*1.12, hy = (y1 - y0)/2*1.12;
+  if (hx*hy > 0.8) return [0, 0, 1, 1];
+  return [(x0 + x1)/2, (y0 + y1)/2, hx, hy];
+}
+/* The lens opening a light sees, for its diffraction star: the iris (B straight blades, normals at rot + 2 pi k/B, inscribed
+   in the unit circle; or round) cut off axis by the image of a lens rim, a unit circle shifted 2*cat along the line to
+   the frame centre (the cat's eye). Returns the surviving straight edges (normal, length/area, blade irregularity) and the
+   curved arcs (first normal angle, span, weight) of both the bladed and the round iris, with their areas. */
+function apertureEdges(B, rot, cat, dx, dy, seed, straight){
+  const c = [2*cat*dx, 2*cat*dy], clip = cat > 1e-3;
+  const ap = Math.cos(Math.PI/B), N = [];
+  for (let k = 0; k < B; k++){ const a = rot + 2*Math.PI*k/B; N.push([Math.cos(a), Math.sin(a)]); }
+  const inPoly = (x, y) => N.every(n => x*n[0] + y*n[1] <= ap + 1e-9);
+  const inRim = (x, y) => !clip || (x - c[0])*(x - c[0]) + (y - c[1])*(y - c[1]) <= 1 + 1e-9;
+  const inIris = (x, y) => x*x + y*y <= 1 + 1e-9;
+  let aP = 0, aR = 0; const G = 72;
+  for (let i = 0; i < G; i++) for (let j = 0; j < G; j++){
+    const x = -1 + (i + 0.5)*2/G, y = -1 + (j + 0.5)*2/G;
+    if (!inRim(x, y)) continue;
+    if (inPoly(x, y)) aP++; if (inIris(x, y)) aR++;
+  }
+  aP *= 4/(G*G); aR *= 4/(G*G);
+  const h = x => { const v = Math.sin(x*12.9898 + 78.233)*43758.5453; return v - Math.floor(v); };
+  const edges = [];
+  if (aP > 1e-4) N.forEach((n, k) => {
+    // the blade edge from vertex to vertex, then the part of it inside the rim circle
+    const t = [-n[1], n[0]], half = Math.sin(Math.PI/B), v1 = [n[0]*ap - t[0]*half, n[1]*ap - t[1]*half], dv = [2*t[0]*half, 2*t[1]*half];
+    let t0 = 0, t1 = 1;
+    if (clip){
+      const fx = v1[0] - c[0], fy = v1[1] - c[1], A = dv[0]*dv[0] + dv[1]*dv[1], Bq = 2*(fx*dv[0] + fy*dv[1]), C = fx*fx + fy*fy - 1, D = Bq*Bq - 4*A*C;
+      if (D <= 0) return;
+      const r0 = (-Bq - Math.sqrt(D))/(2*A), r1 = (-Bq + Math.sqrt(D))/(2*A);
+      t0 = Math.max(0, r0); t1 = Math.min(1, r1);
+      if (t1 <= t0) return;
+    }
+    const len = (t1 - t0)*2*half, arm = 0.45 + 1.1*Math.pow(h(k + seed), 1.5);   // real blades are never even
+    edges.push([n[0], n[1], len/aP*arm*straight, 0]);
+  });
+  // arcs: runs of a circle (centre q) that lie inside the other boundary
+  const arcs = [];
+  const runs = (q, inside, wgt) => {
+    const M = 180, on = [];
+    for (let i = 0; i < M; i++){ const a = 2*Math.PI*(i + 0.5)/M; on.push(inside(q[0] + Math.cos(a), q[1] + Math.sin(a))); }
+    if (on.every(v => v)){ arcs.push([0, 2*Math.PI, wgt, 0]); return; }
+    const st = on.findIndex((v, i) => v && !on[(i + M - 1) % M]);
+    if (st < 0) return;
+    for (let i = 0; i < M; i++){
+      const j = (st + i) % M;
+      if (on[j] && !on[(j + M - 1) % M]){ let n = 0; while (on[(j + n) % M] && n < M) n++; arcs.push([2*Math.PI*j/M, 2*Math.PI*n/M, wgt, 0]); }
+    }
+  };
+  // a circle of radius 1 lights each direction its normal faces with pi/(2A) of the whole-circle halo per stationary point
+  const wP = straight, wR = 1 - 0.85*straight;
+  if (clip && aP > 1e-4) runs(c, (x, y) => inPoly(x, y), Math.PI/(2*aP)*wP);
+  if (aR > 1e-4){
+    runs([0, 0], (x, y) => inRim(x, y), Math.PI/(2*aR)*wR);
+    if (clip) runs(c, (x, y) => inIris(x, y), Math.PI/(2*aR)*wR);
+  }
+  return { edges: edges.slice(0, 24), arcs: arcs.slice(0, 8) };
+}
 /* camera back: digital bodies put an IR-cut filter and a cover glass just in front of a reflective sensor;
    film bodies just have the (less reflective) emulsion. Both add their own ghost paths. */
 function buildSystem(L){
@@ -930,14 +1057,17 @@ function selectGhosts(sys, L, maxG){
     for (let b = 0; b < a; b++){
       if (S[b].stop) continue;
       let score = 0, Tsum = 0, amax = 0, line = false, onSrc = true, foc = Infinity, yDev = 0;
-      for (const [fx, fy] of fields){
+      const gpos = [];
+      // ranked wide open and again three stops down, so paths that only show once the iris closes (and stops clipping
+      // them) are not dropped; a ghost's score scales with the aperture radius, so the stopped-down score is rescaled
+      for (const [stopK, fx, fy] of [...fields.map(f => [1, ...f]), ...fields.map(f => [0.35, ...f])]){
         const d = lightDir(sys, L, fx, fy);
         const xs = [], ys = []; let E = 0, nin = 0;
         for (let i = 0; i < N; i++) for (let j = 0; j < N; j++){
           const ux = i/(N - 1)*2 - 1, uy = j/(N - 1)*2 - 1;
           if (ux*ux + uy*uy > 1) continue;
           nin++;
-          const r = traceRay(S, sys, rayOrigin(sys, d, ux, uy, 1), d, 0.55, a, b, S[si].h);
+          const r = traceRay(S, sys, rayOrigin(sys, d, ux*stopK, uy*stopK, 1), d, 0.55, a, b, S[si].h*stopK);
           if (!r || r.maxRel > 1) continue;
           E += r.T; xs.push(r.x); ys.push(r.y);
         }
@@ -945,9 +1075,11 @@ function selectGhosts(sys, L, maxG){
         E /= nin;
         const mean = v => v.reduce((s, q) => s + q, 0)/v.length;
         const mx = mean(xs), my = mean(ys);
+        if (stopK === 1) gpos.push([fx, fy, -mx*L.squeeze/L.halfH, -my/L.halfH]);
         const sx = Math.sqrt(mean(xs.map(v => (v - mx)*(v - mx)))), sy = Math.sqrt(mean(ys.map(v => (v - my)*(v - my))));
         const area = Math.PI*Math.max(sx*2, 0.05)*Math.max(sy*2, 0.05)/(L.halfH*L.halfH);
-        score = Math.max(score, E/Math.sqrt(area));
+        score = Math.max(score, E/Math.sqrt(area)/stopK);
+        if (stopK !== 1) continue;
         if (Math.max(sx, sy) > 8*Math.max(Math.min(sx, sy), 1e-4)) line = true;
         foc = Math.min(foc, 2*Math.max(sx, sy)/L.halfH);
         if (Math.abs(fy) > 0.3) yDev = Math.max(yDev, Math.abs(-my/L.halfH - fy));
@@ -960,7 +1092,14 @@ function selectGhosts(sys, L, maxG){
       // an anamorphic streak runs through the light; a line path that lands across the frame (a second, mirrored streak)
       // makes the flare read as a copy of itself, so it is left out
       if (line && yDev > 0.25) score = 0;
-      if (score > 0) out.push({ a, b, score, mode: (b > si) ? 1 : 0, T: Tsum, area: amax, line, foc });
+      // magnification: how far the ghost moves when the light moves. A source of angular size s is blurred into each
+      // ghost by k*s, so this sets how soft each ghost of the sun is (small for near-sharp ghosts, large for big ones)
+      let kx = 1, ky = 1;
+      if (gpos.length >= 2){
+        const [p, q] = [gpos[0], gpos[gpos.length > 2 ? 1 : 1]];
+        kx = clamp((q[2] - p[2])/((q[0] - p[0]) || 1), -4, 4); ky = clamp((q[3] - p[3])/((q[1] - p[1]) || 1), -4, 4);
+      }
+      if (score > 0) out.push({ a, b, score, mode: (b > si) ? 1 : 0, T: Tsum, area: amax, line, foc, kx, ky });
     }
   }
   out.sort((p, q) => q.score - p.score);
@@ -1185,6 +1324,16 @@ float shotOpen(vec2 w, float ld){
   ivec2 sz = textureSize(uGP, 0);
   float g = texelFetch(uGP, min(ivec2(uv*vec2(sz)), sz - 1), 0).w;
   if (g <= 0.0) return 1.0;
+  return ld < 0.0 ? 0.0 : step(ld, g);
+}
+// the same, ignoring anything nearer than uNearU (scene units): the traced ghosts test those near occluders ray by ray
+uniform float uNearU;
+float shotOpenFar(vec2 w, float ld){
+  vec2 uv = vec2(w.x/(2.0*uShotAsp) + 0.5, w.y*0.5 + 0.5);
+  if (uv.x < 0.0 || uv.x >= 1.0 || uv.y < 0.0 || uv.y >= 1.0) return 1.0;
+  ivec2 sz = textureSize(uGP, 0);
+  float g = texelFetch(uGP, min(ivec2(uv*vec2(sz)), sz - 1), 0).w;
+  if (g <= 0.0 || g < uNearU) return 1.0;
   return ld < 0.0 ? 0.0 : step(ld, g);
 }
 `;
@@ -1448,14 +1597,14 @@ void main(){
   int i = min(int(gl_FragCoord.x), 3);
   vec4 L = uLw[i];
   if (L.w < 0.5){ o = vec4(1.0); return; }
-  float s = 0.0;
+  float s = 0.0, sf = 0.0;
   for (int k = 0; k < 64; k++){
     float fk = float(k);
     float rr = sqrt((fk + 0.5)/64.0)*L.z;
     float a = fk*2.39996323;
     vec2 w = L.xy + rr*vec2(cos(a), sin(a));
     vec2 uv = vec2((w.x + 3.0)/6.0, (w.y + 1.1)/2.2);
-    if (uShot > 0.5){ s += shotOpen(w, uLd[i]); continue; }
+    if (uShot > 0.5){ s += shotOpen(w, uLd[i]); sf += shotOpenFar(w, uLd[i]); continue; }
     float inside = step(0.0, uv.x)*step(uv.x, 1.0)*step(0.0, uv.y)*step(uv.y, 1.0);
     float open;
     if (uWind > 0.0){
@@ -1463,8 +1612,9 @@ void main(){
       open = textureLod(uBaseMask, uv, 0.0).r*(1.0 - textureLod(uFol, fuv, 0.0).r);
     } else open = textureLod(uMask, uv, 0.0).r;
     s += mix(1.0, open, inside);
+    sf += mix(1.0, open, inside);
   }
-  o = vec4(s/64.0);
+  o = vec4(s/64.0, sf/64.0, 0.0, 1.0);
 }`;
 
 const FS_DOWN = `#version 300 es
@@ -2118,13 +2268,18 @@ const FS_COMP = `#version 300 es
 precision highp float; precision highp int;
 in vec2 vUV; out vec4 o;
 uniform sampler2D uScene, uBloom, uFlare, uHalSrc, uFr;
-uniform float uBloomW, uBloomNorm, uExp, uCA, uVig, uA, uHal, uGrain, uFilm, uTime, uFringe, uDist, uSplit; uniform vec2 uBlur;
+uniform float uBloomW, uBloomNorm, uExp, uCA, uVig, uA, uHal, uGrain, uFilm, uTime, uFringe, uDist, uSplit; uniform vec2 uBlur, uMbL, uMbAx;
 uniform vec2 uRes;
 ${NOISE}
 vec3 fetchHDR(vec2 uv){
   if (vUV.x < uSplit) return texture(uScene, uv).rgb;   // the before half of the wipe: the plate and lights, no lens effects
   return texture(uScene, uv).rgb*(1.0 - uBloomW) + texture(uBloom, uv).rgb/uBloomNorm*uBloomW + texture(uFlare, uv).rgb;
 }
+vec3 fetchScene(vec2 uv){
+  if (vUV.x < uSplit) return texture(uScene, uv).rgb;
+  return texture(uScene, uv).rgb*(1.0 - uBloomW) + texture(uBloom, uv).rgb/uBloomNorm*uBloomW;
+}
+vec3 fetchFlare(vec2 uv){ return vUV.x < uSplit ? vec3(0.0) : texture(uFlare, uv).rgb; }
 vec3 agxCurve(vec3 x){ vec3 x2 = x*x, x4 = x2*x2;
   return 15.5*x4*x2 - 40.14*x4*x + 31.96*x4 - 6.868*x2*x + 0.4298*x2 + 0.1191*x - 0.00232; }
 vec3 agx(vec3 v){
@@ -2161,10 +2316,16 @@ void main(){
   int nb = length(uBlur) > 0.0008 ? 12 : 1;
   for (int k = 0; k < 12; k++){
     if (k >= nb) break;
-    vec2 cc = c + (nb > 1 ? uBlur*(float(k)/11.0 - 0.5) : vec2(0.0));
-    col.r += fetchHDR(0.5 + cc*(1.0 + uCA)).r;
-    col.g += fetchHDR(0.5 + cc).g;
-    col.b += fetchHDR(0.5 + cc*(1.0 - uCA)).b;
+    float tau = nb > 1 ? float(k)/11.0 - 0.5 : 0.0;
+    vec2 cc = c + uBlur*tau;
+    // the flare moves differently: everything on the light moves with it, but a ghost at k times the light's position
+    // (along the line through the lens axis) moves k times as far, and the other way for ghosts across the centre
+    vec2 pf = vec2(c.x*2.0*uA, c.y*2.0) - uMbAx;
+    float kk = dot(uMbL, uMbL) > 1e-6 ? clamp(dot(pf, uMbL)/dot(uMbL, uMbL), -3.0, 3.0) : 1.0;
+    vec2 cf = c + uBlur*tau*kk;
+    col.r += fetchScene(0.5 + cc*(1.0 + uCA)).r + fetchFlare(0.5 + cf*(1.0 + uCA)).r;
+    col.g += fetchScene(0.5 + cc).g + fetchFlare(0.5 + cf).g;
+    col.b += fetchScene(0.5 + cc*(1.0 - uCA)).b + fetchFlare(0.5 + cf*(1.0 - uCA)).b;
   }
   col /= float(nb);
   float ls = dot(texture(uScene, uv).rgb, lw);
@@ -2278,7 +2439,8 @@ layout(location=0) out vec4 o0; layout(location=1) out vec4 o1;
 uniform vec4 uS0[40]; uniform vec4 uS1[40]; uniform vec4 uS2[40]; uniform vec4 uS3[40]; uniform highp sampler2D uGhT; uniform vec4 uLD; uniform vec4 uEP;
 uniform int uNS, uGrid, uCols, uTiles, uNG, uTileOff, uNSub;
 uniform float uStopR, uApRatio, uZs, uHalfH, uSqueeze, uFig, uRot, uLamJ, uSrcD, uFocusShift, uPass;
-uniform vec4 uLS; uniform int uNLens;
+uniform vec4 uLS, uPW0, uPW1; uniform int uNLens;
+uniform float uOccOn, uOccAsp, uLdM, uUnitM; uniform vec2 uLpT, uTanXY; uniform highp sampler2D uOccD;
 ${NOISE}${IRIS}${COAT}
 float mediumN(int k, float lam){ if (k < 0) return 1.0; if (uS0[k].z <= 1.0001) return 1.0; vec4 a = uS3[k]; float x = 1.0/(lam*lam) - 3.5; return a.x + x*(a.y + x*(a.z + x*a.w)); }
 /* Shirley-Chiu concentric map: equal-area square -> disc, so every ray starts inside the pupil */
@@ -2301,6 +2463,8 @@ void main(){
   float lam = 0.42 + 0.04*(float(ch) + uLamJ);
   vec2 u = concentric(vec2(float(i), float(j))/float(uGrid - 1)*2.0 - 1.0);
   u = mat2(cos(uRot), sin(uRot), -sin(uRot), cos(uRot))*u;
+  vec4 PWn = G.z > 0.5 ? uPW1 : uPW0;
+  u = PWn.xy + PWn.zw*u;   // only the part of the pupil this light can get through (see pupilWindow)
   float gs = G.z > 0.5 ? uApRatio : max(uApRatio, 1.0);
   vec4 LD = uLD;
   // the light is a disc, not a point: three sub-sources across it (plus a little pupil-correlated spread) blur every ghost
@@ -2379,7 +2543,24 @@ void main(){
   vec2 fr = vec2(0.0);
   if (ok) fr = vec2(-p.x*uSqueeze/uHalfH, -p.y/uHalfH);
   else maxRel = 99.0;
-  o0 = vec4(fr, ap); o1 = vec4(T*1000.0, maxRel, gs/uApRatio, clamp(worst, -3.0, 3.0));
+  /* Near occluders, ray by ray. Rays from different points of the lens opening travel toward the light a few millimetres
+     apart, so an occluder close to the camera (foreground leaves, a character passing the lens) blocks some of them and
+     not others: its silhouette appears inside the ghosts. March this ray back toward the light through the shot's
+     depth and drop it if it passes behind a surface nearer than NEAR_OCC_M (farther occluders are in the visibility). */
+  if (uOccOn > 0.5 && T > 0.0){
+    vec2 Pm = u*uEP.zw*gs*0.001;                        // where this ray crosses the lens opening, in metres
+    float zmax = uLdM > 0.0 ? min(5.0, uLdM*0.95) : 5.0;
+    ivec2 sz = textureSize(uOccD, 0);
+    for (int k = 0; k < 10; k++){
+      float z = 0.15*pow(zmax/0.15, (float(k) + 0.5)/10.0);
+      vec2 w = uLpT + Pm/(z*uTanXY);
+      vec2 uv = vec2(w.x/(2.0*uOccAsp) + 0.5, w.y*0.5 + 0.5);
+      if (uv.x < 0.0 || uv.x >= 1.0 || uv.y < 0.0 || uv.y >= 1.0) continue;
+      float D = texelFetch(uOccD, min(ivec2(uv*vec2(sz)), sz - 1), 0).w*uUnitM;
+      if (D > 0.0 && D < z && z < D*1.4 + 0.15){ T = 0.0; break; }
+    }
+  }
+  o0 = vec4(fr, ap); o1 = vec4(T*1000.0, maxRel, gs/uApRatio*sqrt(PWn.z*PWn.w), clamp(worst, -3.0, 3.0));
 }`;
 /* Per traced ray, once: where it lands (with a minimum footprint), how bright it is there, and whether it failed.
    Doing this here rather than in the mesh draw keeps the draw cheap enough to repeat for several sub-bands. */
@@ -2396,6 +2577,7 @@ vec2 pupilU(ivec2 c){
     if (abs(u.x) > abs(u.y)){ r = u.x; ph = 0.78539816*(u.y/u.x); } else { r = u.y; ph = 1.57079633 - 0.78539816*(u.x/u.y); }
     u = r*vec2(cos(ph), sin(ph));
   } else u = vec2(0.0);
+  // grid coordinates, before the tracer's pupil window: the mesh is built in these (the window only re-spaces the rays)
   return mat2(cos(uRot), sin(uRot), -sin(uRot), cos(uRot))*u;
 }
 ivec2 gB;
@@ -2509,6 +2691,7 @@ const VS_GDRAW = `#version 300 es
 precision highp float; precision highp int;
 uniform highp sampler2D uT0, uT1; uniform sampler2D uVis, uSpd;
 uniform int uGrid, uCols, uTileOff, uNSub, uLi, uInstBase; uniform float uA, uAtten, uLamJ; uniform vec3 uE, uWB; uniform vec2 uAxis;
+uniform highp sampler2D uGhT, uGov; uniform vec4 uSrcE; uniform float uPassG, uNearRay;
 /* CIE 1931 colour matching (Wyman, Sloan & Shirley 2013 multi-lobe fit), XYZ -> linear sRGB */
 float lobe(float x, float mu, float s1, float s2){ float t = (x - mu)/(x < mu ? s1 : s2); return exp(-0.5*t*t); }
 vec3 specRGB(float nm){
@@ -2521,7 +2704,7 @@ vec3 specRGB(float nm){
 }
 // centroid: with multisampling, a pixel that only clips a thin ghost triangle is otherwise shaded at its centre, outside the
 // triangle, where the interpolated brightness is extrapolated far past its real value: a single-wavelength speck
-centroid out vec2 vAp; centroid out float vRel; centroid out vec3 vCol; centroid out float vY; centroid out float vBad; centroid out float vInv; centroid out float vSd; flat out float vSeed;
+centroid out vec2 vAp; centroid out float vRel; centroid out vec3 vCol; centroid out float vY; centroid out float vBad; centroid out float vInv; centroid out float vSd; flat out float vSeed; flat out float vKg;
 /* Six wavelengths are traced per ghost; each is drawn as SPEC_SUB sub-bands whose geometry is interpolated between
    neighbouring traced wavelengths, so dispersion paints continuous rainbow gradients rather than six stepped copies
    whose separate edges read as coloured dots and flicker as the light moves. */
@@ -2549,20 +2732,31 @@ void main(){
   vBad = flag > 1.5 ? 1.0 : 0.0;
   vInv = flag > 0.5 ? 1.0 : 0.0;
   float dens = flag > 0.5 ? 0.0 : max(mix(a1.x, b1.x, sA), 0.0)*(1.0 - smoothstep(0.04, 0.09, dl));
-  float vis = texelFetch(uVis, ivec2(uLi, 0), 0).r*uAtten;
+  float vis = (uNearRay > 0.5 ? texelFetch(uVis, ivec2(uLi, 0), 0).g : texelFetch(uVis, ivec2(uLi, 0), 0).r)*uAtten;
   // this sub-band's wavelength -> linear RGB, white-balanced so a flat spectrum sums to white; each sub-band carries 1/K
   float nm = 420.0 + 40.0*(float(ch) + uLamJ + t);
   // the source's own emission at this wavelength (smoothed over the sub-band)
   float emit = texture(uSpd, vec2(((nm - 380.0)/320.0*47.0 + 0.5)/48.0, (float(uLi) + 0.5)/4.0)).r;
   vec3 cm = specRGB(nm)*uWB/float(K)*emit;
   vCol = cm*uE*dens*vis;
+  // The light is a disc (or a panel), not a point, and a ghost moves k times as far as the light does, so each ghost is
+  // that source blurred by k times its size: near-sharp ghosts stay crisp, big ones go soft. The ghost's k rides along
+  // in the alpha channel (weighted by its brightness) and the blur pass reads it to set the blur radius pixel by pixel.
+  {
+    int gI = tg/(6*uNSub);
+    vec2 kg = texelFetch(uGhT, ivec2(gI, 1), 0).xy;
+    vKg = length(kg)*0.70710678;
+    // the compositor's per-ghost override (Pick a ghost): gain and tint, and a nudge
+    vec4 ov0 = texelFetch(uGov, ivec2(gI, 0), 0), ov1 = texelFetch(uGov, ivec2(gI, 1), 0);
+    vCol *= ov0.rgb; pos += ov1.xy;
+  }
   pos += uAxis;
   vAp = mix(a0.zw, b0.zw, sA); vRel = mix(a1.y, b1.y, sA); vY = pos.y; vSd = mix(a1.w, b1.w, sA);
   gl_Position = vec4(pos.x/uA, pos.y, 0.0, 1.0);
 }`;
 const FS_GDRAW = `#version 300 es
 precision highp float; precision highp int;
-centroid in vec2 vAp; centroid in float vRel; centroid in vec3 vCol; centroid in float vY; centroid in float vBad; centroid in float vInv; centroid in float vSd; flat in float vSeed; out vec4 o;
+centroid in vec2 vAp; centroid in float vRel; centroid in vec3 vCol; centroid in float vY; centroid in float vBad; centroid in float vInv; centroid in float vSd; flat in float vSeed; flat in float vKg; out vec4 o;
 uniform int uLi; uniform float uDust; uniform sampler2D uDirt;
 ${NOISE}${FLICK}${IRIS}
 void main(){
@@ -2578,7 +2772,7 @@ void main(){
   vec3 r = vCol*m*c*dk*flick(uLi, vY);
   // never let a degenerate sample through: one NaN would be smeared into a black hole by the resolve and blur
   r = clamp(r, 0.0, 6.0e4); if (!(r.x + r.y + r.z < 2.0e5)) r = vec3(0.0);
-  o = vec4(r, 1.0);
+  o = vec4(r, dot(r, vec3(0.2126, 0.7152, 0.0722))*vKg);
 }`;
 /* each ghost also carries a soft scattered halo from coating and surface micro-roughness */
 const FS_GSCAT = `#version 300 es
@@ -2594,7 +2788,10 @@ void main(){
 const FS_GBLUR = `#version 300 es
 precision highp float;
 in vec2 vUV; out vec4 o;
-uniform sampler2D uG, uGl; uniform vec2 uK1, uK2; uniform float uLod, uRect, uGs, uGb; uniform vec4 uJ;
+uniform sampler2D uG, uGl; uniform vec2 uK1, uK2, uKs, uLod2; uniform float uLod, uRect, uGs, uGb, uLodB, uKmin, uLodK; uniform vec4 uJ;
+const vec3 LW = vec3(0.2126, 0.7152, 0.0722);
+// the brightness-weighted ghost magnification around this pixel, read from a coarse level so it reaches past each ghost's edge
+float kAt(sampler2D t, float lv){ vec4 q = textureLod(t, vUV, lv); float l = dot(q.rgb, LW); return l > 1e-12 ? q.a/l : 0.0; }
 /* cubic B-spline read of one mip level from four bilinear taps, so coarse levels stay smooth instead of blocky */
 vec3 cubicLod(sampler2D t, vec2 uv, float lv){
   vec2 ts = vec2(textureSize(t, int(lv))), st = uv*ts - 0.5, i = floor(st), f = st - i;
@@ -2616,55 +2813,65 @@ void main(){
   // grid of lines inside big soft ghosts. Jitter the lattice (and turn it, for round sources) on every refinement pass so
   // the copies land somewhere new each time and average into a smooth smear, and read coarse levels with a B-spline.
   mat2 rot = mat2(uJ.x, uJ.y, -uJ.y, uJ.x);
+  float kh = clamp(kAt(uG, uLodK), uKmin, 4.0), kl = clamp(kAt(uGl, max(uLodK - 1.0, 0.0)), uKmin, 4.0);
+  float lh = max(0.0, uLodB + log2(kh)), ll = max(0.0, uLodB + log2(kl) - 1.0);
   for (int j = 0; j < 6; j++) for (int i = 0; i < 6; i++){
     vec2 jt = fract(uJ.zw + vec2(float(i)*0.618034, float(j)*0.381966));
     vec2 g = (vec2(float(i), float(j)) + jt)/3.0 - 1.0;
     vec2 sp = uRect > 0.5 ? g : rot*sqToDisc(g);
-    vec2 uv = vUV + uK1*sp.x + uK2*sp.y;
-    if (uGs > 0.0) acc += rd(uG, uv, uLod)*uGs;
-    if (uGb > 0.0) acc += rd(uGl, uv, max(uLod - 1.0, 0.0))*uGb;
+    vec2 dv = uK1*sp.x + uK2*sp.y;
+    if (uGs > 0.0) acc += rd(uG, vUV + dv*kh, lh)*uGs;
+    if (uGb > 0.0) acc += rd(uGl, vUV + dv*kl, ll)*uGb;
   }
   o = vec4(acc/36.0, 1.0);
 }`;
-/* diffraction from the iris, from Fraunhofer theory: straight blade edges throw spikes falling as 1/r^2 (width ~ lambda*N),
-   curved blades give the circular-aperture envelope falling as 1/r^3. Scales with wavelength and f-number. */
+/* Diffraction from the lens opening as it really is for this light: the iris polygon (or its rounded version), cut by
+   the lens rims into a cat's eye off axis. Far from the light, Fraunhofer diffraction of any aperture is set by its
+   boundary (stationary phase): every straight edge throws a spike along its normal, energy per unit length
+   (l/A)*lambda*N/(2 pi^2 x^2) (l: edge length, A: aperture area); every curved stretch lights the directions of its
+   normals with a 1/x^3 halo in proportion to its radius of curvature. The edges and arcs are worked out in JS from the
+   clipped aperture of each light (see apertureEdges), so the star changes as the rims cut the iris: shortened blade
+   edges throw weaker spikes and the rim arcs add a halo across the cat's eye. Scales with wavelength and f-number. */
 const FS_PDIFF = `#version 300 es
 precision highp float; precision highp int;
 in vec2 vD; in vec2 vC; in float vY; flat in float vVis; out vec4 o;
-uniform vec3 uE, uSE, uCat; uniform float uN, uBl, uSpikes, uRot, uStraight, uHalfH, uPxMM, uS, uSqx, uSeed, uStarK, uStarSoft; uniform int uLi;
+uniform vec3 uE, uSE; uniform float uN, uStraight, uHalfH, uPxMM, uS, uSqx, uStarK, uStarSoft; uniform int uLi;
+uniform int uNE, uNA; uniform vec4 uEd[24]; uniform vec4 uAr[8];
 ${NOISE}${FLICK}${SHAPE}
+float spanW(float th, vec4 a){
+  if (a.y > 6.28) return 1.0;   // a whole circle has a point facing every direction
+  float dl = mod(th - a.x + 0.1, 6.2831853) - 0.1;
+  return smoothstep(-0.08, 0.02, dl)*(1.0 - smoothstep(a.y - 0.02, a.y + 0.08, dl));
+}
 void main(){
   if (vVis <= 1e-4) discard;
   vec2 d = shapeOff(vD, uSE); d.x /= uSqx;
   float xmm = length(d)*uHalfH;
-  float a = atan(d.y, d.x);
-  float seg = 6.28318531/uSpikes;
-  float aa = a - uRot; float id = floor(aa/seg + 0.5); float da = aa - id*seg;
-  float arm = 0.45 + 1.1*pow(h11(mod(id, uSpikes) + uSeed), 1.5);   // real blades are never even: some rays far stronger
-  // off axis the lens rims vignette the pupil into a cat's eye, narrow along the line to the frame centre. The rims are
-  // curved, so the blade edges they cover stop throwing spikes: rays pointing along that line fade, the others stay,
-  // and the narrower pupil spreads the round part of the pattern along it (uCat: direction to the light, amount)
-  float clip = clamp(uCat.z*3.0, 0.0, 0.85);
-  arm *= 1.0 - clip*pow(abs(cos(id*seg + uRot - atan(uCat.y, uCat.x))), 3.0);
-  float pmm = abs(sin(da))*xmm;
   float smm = uS*uHalfH;
   float x = sqrt(xmm*xmm + smm*smm*0.3);
-  vec2 dr = vec2(dot(d, uCat.xy), dot(d, vec2(-uCat.y, uCat.x)))*vec2(1.0/(1.0 + 2.0*uCat.z), 1.0);
-  float xr = length(dr)*uHalfH, xi = sqrt(xr*xr + smm*smm*0.3);
-  float mult = mod(uBl, 2.0) < 0.5 ? 2.0 : 1.0;
+  float th = atan(d.y, d.x);
   vec3 lam = vec3(0.62e-3, 0.55e-3, 0.46e-3);
-  vec3 col;
+  // curved boundary: the directions each arc's normals cover (and their opposites)
+  float arcW = 0.0;
+  for (int k = 0; k < 8; k++){ if (k >= uNA) break; arcW += uAr[k].z*(spanW(th, uAr[k]) + spanW(th + 3.1415927, uAr[k])); }
+  vec3 col = vec3(0.0);
   for (int c = 0; c < 3; c++){
     float l = lam[c];
-    float iso = 2.0*l*uN/(97.409*xi*xi*xi)/(1.0 + 2.0*uCat.z);
+    float iso = 2.0*l*uN/(97.409*x*x*x)*arcW;
     // uStarSoft: rounded, slightly irregular blades and spherical aberration smear each ray sideways (Cooke, K35)
     float sig = max(uPxMM*1.0, l*uN)*(1.0 + uStarSoft*(2.5 + 0.06*xmm));
-    float rho = mult*l*uN/(9.8696*uBl*x*x);
-    float spk = rho*exp(-pmm*pmm/(2.0*sig*sig))/(2.5066*sig)*arm*uStarK;
-    col[c] = iso*(1.0 - uStraight*0.85) + spk*uStraight;
+    float spk = 0.0;
+    for (int k = 0; k < 24; k++){
+      if (k >= uNE) break;
+      vec2 n = uEd[k].xy;
+      float al = dot(d, n)*uHalfH, pm = dot(d, vec2(-n.y, n.x))*uHalfH;
+      float xa = sqrt(al*al + smm*smm*0.3);
+      spk += uEd[k].z*l*uN/(19.739*xa*xa)*exp(-pm*pm/(2.0*sig*sig))/(2.5066*sig);
+    }
+    col[c] = iso + spk*uStarK;
   }
   float win = 1.0 - smoothstep(0.6, 1.0, length(vC));
-  o = vec4(col*(1.0 - 0.5*uCat.z)*uHalfH*uHalfH*uE*vVis*win*flick(uLi, vY), 1.0);
+  o = vec4(col*uHalfH*uHalfH*uE*vVis*win*flick(uLi, vY), 1.0);
 }`;
 
 /* GLSL leaves smoothstep undefined when edge0 >= edge1, and these shaders use falling edges all over (1 inside a shape,
@@ -2764,7 +2971,7 @@ function full(){ gl.bindVertexArray(vaoFull); gl.drawArrays(gl.TRIANGLES, 0, 3);
 const FLICK_UNIT = 7;
 /* ray-trace buffers: one tile of N x N rays per (light, ghost path, wavelength) */
 let canTrace = !!gl.getExtension('EXT_color_buffer_float');
-let traceRT = null, prepRT = null, traceCacheSig = '';
+let traceRT = null, prepRT = null, traceCacheSig = '', PW = [[0, 0, 1, 1], [0, 0, 1, 1]];
 const SPEC_SUB = 3;   // drawn sub-bands per traced wavelength (must match K in VS_GDRAW)
 /* ghost meshes are built from thousands of sub-pixel triangles; drawing them multisampled measures their coverage
    properly, so tiny bright ghosts don't sparkle and strobe as they move */
@@ -2958,6 +3165,7 @@ const state = {
   fps: 24, shutter: 180, mains: 60,
   focus: Infinity, autoFocus: true, iris: 'lens', smear: 'none', leak: 'off', haze: 0, showSet: true, showSrc: true,
   plateEV: 0, pan: 0, tilt: 0, focal: null, compare: false, split: 0.5, shotKind: '', washSize: 1,
+  layer: 'beauty', lightSolo: null, mixSolo: null, mixMute: {}, ghostOv: {}, ghostSolo: null,
   coating: 'lens', grating: { mode: 'off', lpmm: 150, rot: 20, amt: 0.3 },
   prism: { on: false, glass: 'SF11', apex: 30, rot: 200, tilt: 0, cov: 0.5, soft: 0.1, amt: -8 }, free: { tilt: 0, dir: 30 },
   screen: { on: true, thr: 3, amount: 1, ghosts: 1, hold: true },
@@ -3015,14 +3223,17 @@ function lensSystem(){
      ghost radius, energy kept). The anamorphic streak paths, which are meant to be lines, are left alone. */
   const GHOST_MIN_R = 0.05;
   list.forEach((g, i) => GH.set([g.a, g.b, g.mode, g.line ? 0 : Math.max(0, GHOST_MIN_R - (isFinite(g.foc) ? g.foc : 1))], i*4));
+  const GHt = new Float32Array(128*8); GHt.set(GH);
+  list.forEach((g, i) => GHt.set([g.kx, g.ky, 0, 0], 512 + i*4));
   /* manufacturing tolerances: every element sits a little off-centre and tilted, so ghosts are never perfectly aligned */
   const S2 = new Float32Array(40*4), tr = mulberry32(L.seed*131 + 7), tl = L.tol;
   sys.S.forEach((q, i) => { if (q.stop) return; S2.set([(tr()*2 - 1)*tl.dec, (tr()*2 - 1)*tl.dec, (tr()*2 - 1)*tl.tilt, (tr()*2 - 1)*tl.tilt], i*4); });
   const elements = sys.S.filter(q => q.nd > 1.0001).length - (clear ? 1 : 0) - (back === 'digital' ? 2 : 0);
   const ghTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, ghTex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 128, 1, 0, gl.RGBA, gl.FLOAT, GH);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 128, 2, 0, gl.RGBA, gl.FLOAT, GHt);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  return (sysCache[key] = { sys, nLens, S0, S1, S2, S3, GH, ghTex, nSharp, nG: sel.list.length, nS: sys.S.length, hStop: sys.S[sys.si].h, nfull: sys.eflY/(2*sys.ep.ry), elements });
+  const aMin = [0, 1].map(m => { const g = list.filter(q => q.mode === m); return g.length ? Math.min(...g.map(q => q.a)) : -1; });
+  return (sysCache[key] = { sys, nLens, S0, S1, S2, S3, GH, list, aMin, ghTex, nSharp, nG: sel.list.length, nS: sys.S.length, hStop: sys.S[sys.si].h, nfull: sys.eflY/(2*sys.ep.ry), elements });
 }
 const camOf = () => CAMERAS.find(c => c.id === state.camera);
 /* rehoused lenses are often fitted with a different iris: blade count and blade shape set the ghost and starburst shapes */
@@ -3367,9 +3578,29 @@ const arrLS = new Float32Array(16), arrBk = new Float32Array(16), arrLe = new Fl
 const arr16 = new Float32Array(16), arr16b = new Float32Array(16), arr12 = new Float32Array(12), arr12b = new Float32Array(12), arr12c = new Float32Array(12), arr8 = new Float32Array(8), arr4 = new Float32Array(4);
 let frameCount = 0, refining = false;
 const derived = [];
+/* What the renderer draws: the mixer, then solo / mute on its elements, then the layer being viewed. The layers are
+   the ones the Nuke node would output, each over black. */
+const LAYERS = { ghosts: ['ghostsS', 'ghostsL', 'rainbow', 'rring'], star: ['star', 'streak'], glare: ['glare', 'dirt', 'barrel', 'bloom'] };
+function effectiveMix(){
+  const m = { ...MIX_DEF, ...state.mix }, mute = state.mixMute || {}, layer = state.layer || 'beauty';
+  for (const k of Object.keys(m)){
+    if (state.mixSolo ? k !== state.mixSolo : mute[k]) m[k] = 0;
+    if (LAYERS[layer] && !LAYERS[layer].includes(k)) m[k] = 0;
+  }
+  return m;
+}
+const layerTricks = () => !['ghosts', 'star'].includes(state.layer);
 function render(t){
+  // a layer view is the flare alone: no plate, no lamp
+  const layer = state.layer || 'beauty';
+  if (layer === 'beauty') return renderCore(t);
+  const keep = [state.showSet, state.showSrc, state.scene];
+  state.showSet = false; state.showSrc = false;
+  try { renderCore(t); } finally { [state.showSet, state.showSrc] = keep; }
+}
+function renderCore(t){
   const L = lensOf(), C = camOf(), A = L.aspect, W = canvas.width, H = canvas.height;
-  const MX = state.mix, MS = state.master;
+  const MX = effectiveMix(), MS = state.master;
   state.comps = { ghosts: MX.ghostsS + MX.ghostsL > 0, star: MX.star > 0, streak: MX.streak > 0, veil: MX.glare > 0, dirt: MX.dirt > 0,
     bloom: MX.bloom > 0, barrel: MX.barrel > 0, sensor: MX.sensor > 0, rainbow: MX.rainbow > 0 };
   const tex = loadScene(state.scene), sc = SCENES[state.scene];
@@ -3409,7 +3640,9 @@ function render(t){
     const fcam = camEfl(), by = fcam*inv/(2*state.t*(L.halfH/eflmm)), bx = by/(L.anamorphic ? L.sqx : 1);
     const cat = L.cat*Math.min(Math.hypot(sx/A, sy), 1.4)*(1 - 0.75*clamp(stops0/4, 0, 1));
     // per-light flare gain (as in Animal Logic's flare pass): scales what the lens does with this light, not the light itself
-    const fg = Math.pow(2, l.flareGain || 0);
+    // solo and mute take the light's flare out, not the light
+    const audible = state.lightSolo != null && state.lights.some(q => q.id === state.lightSolo) ? l.id === state.lightSolo : !l.mute;
+    const fg = audible ? Math.pow(2, l.flareGain || 0) : 0;
     derived.push({ sx, sy, size, col, flux: flux*fg, srcFlux: flux, atten, edge: e, occl: l.occl && state.scene !== 'black' && state.showSet, ex, ey, ang, kind: T.ext ? T.shape : 0, area,
       bx, by, bmax: Math.max(bx, by), cat, behind: Dmm > focusMM ? 1 : -1, dist: Dmm, kT: T.kTrace || 1,
       spd: spdOf(l, col), fluxTot, prof, beam: T.beam || 0, aim: l.aim ?? T.aim ?? 0, dir: (l.dir ?? T.dir ?? -90)*Math.PI/180 });
@@ -3550,7 +3783,7 @@ function render(t){
     const N = preview ? PREVIEW.n : Q.n, NSUB = preview ? PREVIEW.sub : Q.sub;
     const cols = Math.floor(traceRT.w/N), per = Math.floor(cols*Math.floor(traceRT.h/N)/6)*6, total = TS.nG*NSUB*6;
     const windy = sc.wind && wind > 0 && derived.some(d => d.occl);
-    const sig = [L.id, state.coating, AX[0].toFixed(4), AX[1].toFixed(4), f, camOf().film, state.quality, preview, state.t, MX.ghostsS, MX.ghostsL, poly.toFixed(4), state.dirt, state.comps.dirt, TS.nG, W, H, state.focus, IR.blades, IR.bladeRound, IR.irisRot,
+    const sig = [L.id, state.coating, govSig, AX[0].toFixed(4), AX[1].toFixed(4), f, camOf().film, state.quality, preview, state.t, MX.ghostsS, MX.ghostsL, poly.toFixed(4), state.dirt, state.comps.dirt, TS.nG, W, H, state.focus, IR.blades, IR.bladeRound, IR.irisRot,
       windy ? t : 0, flickData.slice(0, nL*16).join(','),
       ...derived.map(d => [d.sx.toFixed(5), d.sy.toFixed(5), d.size, d.flux.toFixed(5), d.col.map(v => v.toFixed(4)).join(':'), d.atten.toFixed(4), d.ex, d.ey, d.ang, d.dist, d.kT, d.spd.key].join(';'))].join('|');
     if (sig !== traceCacheSig){
@@ -3581,6 +3814,8 @@ function render(t){
       gl.uniform1i(tp.u.uNLens, TS.nLens);
       gl.useProgram(g.p);
       gl.uniform1i(g.u.uVis, 0); gl.uniform1i(g.u.uDirt, 1); gl.uniform1i(g.u.uT0, 2); gl.uniform1i(g.u.uT1, 3); gl.uniform1i(g.u.uFlick, FLICK_UNIT);
+      gl.uniform1i(g.u.uGhT, 5); gl.uniform1f(g.u.uPassG, accum.n);
+      bindTex(9, ghostOvTex(TS)); gl.uniform1i(g.u.uGov, 9); gl.uniform1f(g.u.uNearRay, shotOn() ? 1 : 0);
       gl.uniform1f(g.u.uDust, state.comps.dirt ? state.dirt*0.55 : 0);
       gl.uniform1i(g.u.uGrid, N); gl.uniform1i(g.u.uCols, cols); gl.uniform1i(g.u.uNSub, NSUB); gl.uniform1f(g.u.uA, A);
       gl.uniform1f(g.u.uLamJ, lamJ); gl.uniform3f(g.u.uWB, ...SPEC_WB); gl.uniform2f(g.u.uAxis, AX[0], AX[1]);
@@ -3596,10 +3831,11 @@ function render(t){
       gl.uniform1f(g.u.uBlades, IR.blades); gl.uniform1f(g.u.uPoly, poly); gl.uniform1f(g.u.uIrisRot, IR.irisRot); gl.uniform1f(g.u.uBladeRound, IR.bladeRound);
       derived.forEach((d, i) => {
         const k = 2*Math.PI*K_TRACE*d.flux*d.kT/NSUB;
-        gl.clearColor(0, 0, 0, 1);
+        gl.clearColor(0, 0, 0, 0);   // alpha carries each ghost's magnification (see VS_GDRAW), so it starts at zero
         const fbHi = msaa ? msaa[0] : ghostRT, fbLo = msaa ? msaa[1] : ghostLoRT;
         target(fbHi); gl.clear(gl.COLOR_BUFFER_BIT);
         target(fbLo); gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clearColor(0, 0, 0, 1);
         for (let off = 0; off < total; off += per){
           const cnt = Math.min(per, total - off);
           // trace this batch of rays...
@@ -3608,6 +3844,16 @@ function render(t){
           gl.bindFramebuffer(gl.FRAMEBUFFER, traceRT.f);
           gl.viewport(0, 0, cols*N, Math.ceil(cnt/cols)*N);
           gl.uniform4f(tp.u.uLD, TS.LD[i*4], TS.LD[i*4 + 1], TS.LD[i*4 + 2], TS.LD[i*4 + 3]);
+          if (off === 0){
+            const dir = [TS.LD[i*4], TS.LD[i*4 + 1], TS.LD[i*4 + 2]];
+            const w0 = pupilWindow(TS.sys, dir, TS.aMin[0], Math.max(TS.apRatio, 1), TS.stopR), w1 = pupilWindow(TS.sys, dir, TS.aMin[1], TS.apRatio, TS.stopR);
+            PW = [w0, w1];
+          }
+          gl.uniform4f(tp.u.uPW0, ...PW[0]); gl.uniform4f(tp.u.uPW1, ...PW[1]);
+          { const on = shotOn(); gl.uniform1f(tp.u.uOccOn, on ? 1 : 0);
+            if (on){ bindTex(8, shotDepthTex()); gl.uniform1i(tp.u.uOccD, 8); gl.uniform1f(tp.u.uOccAsp, SHOT.S.aspect); gl.uniform1f(tp.u.uUnitM, shotUnits());
+              gl.uniform1f(tp.u.uLdM, isFinite(d.dist) && LIGHT_TYPES[state.lights[i].type].dref ? d.dist : -1); gl.uniform2f(tp.u.uLpT, d.sx, d.sy);
+              gl.uniform2f(tp.u.uTanXY, L.halfH/(L.squeeze*TS.sys.eflX), L.halfH/TS.sys.eflY); } }
           gl.uniform4f(tp.u.uLS, 0, 0, 0, 0); gl.uniform1f(tp.u.uSrcD, isFinite(d.dist) ? d.dist : 0);
           gl.uniform1i(tp.u.uTileOff, off); gl.uniform1i(tp.u.uTiles, cnt);
           full();
@@ -3624,6 +3870,7 @@ function render(t){
           bindTex(0, visRT.t); bindTex(1, dirtTex); bindTex(2, prepRT.t0); bindTex(3, prepRT.t1); bindTex(6, spdTex);
           gl.uniform1i(g.u.uTileOff, off); gl.uniform1i(g.u.uLi, i); gl.uniform1f(g.u.uAtten, state.matte ? d.atten : Math.exp(-d.edge/1.6));   // past the frame edge the traced apertures clip the ghosts themselves
           gl.uniform3f(g.u.uE, d.col[0]*k*d.spd.corr[0], d.col[1]*k*d.spd.corr[1], d.col[2]*k*d.spd.corr[2]);
+          if (d.kind) gl.uniform4f(g.u.uSrcE, d.ex, d.ey, d.ang, 1); else gl.uniform4f(g.u.uSrcE, d.size, d.size, 0, 0);
           if (split > 0){ target(fbHi); gl.uniform1i(g.u.uInstBase, 0); gl.drawElementsInstanced(gl.TRIANGLES, vg.count, gl.UNSIGNED_SHORT, 0, split*SPEC_SUB); }
           if (cnt - split > 0){ target(fbLo); gl.uniform1i(g.u.uInstBase, split); gl.drawElementsInstanced(gl.TRIANGLES, vg.count, gl.UNSIGNED_SHORT, 0, (cnt - split)*SPEC_SUB); }
         }
@@ -3638,7 +3885,7 @@ function render(t){
         gl.bindTexture(gl.TEXTURE_2D, ghostLoRT.t); gl.generateMipmap(gl.TEXTURE_2D);
         // every ghost of a light is an image of that light: smear this light's ghosts by its own shape (disc, softbox,
         // tube, window) at a typical ghost magnification, then add them to the accumulated flare
-        const kg = 0.8, minR = 3/H;
+        const kg = 1.0, minR = 3/H;
         let k1, k2, rect = 0;
         if (d.kind){
           const c = Math.cos(d.ang), sn = Math.sin(d.ang), ax = Math.max(d.ex*kg, minR), ay = Math.max(d.ey*kg, minR);
@@ -3651,7 +3898,12 @@ function render(t){
         gl.uniform2f(gb.u.uK1, k1[0], k1[1]); gl.uniform2f(gb.u.uK2, k2[0], k2[1]);
         { const a = accum.n*2.39996, jx = (accum.n*0.7548777 + 0.5) % 1, jy = (accum.n*0.5698403 + 0.5) % 1;
           gl.uniform4f(gb.u.uJ, Math.cos(a), Math.sin(a), jx, jy); }
-        gl.uniform1f(gb.u.uLod, Math.max(0, Math.log2(Math.max(1, Rpx/2.4)))); gl.uniform1f(gb.u.uRect, rect); gl.uniform1f(gb.u.uGs, MX.ghostsS); gl.uniform1f(gb.u.uGb, MX.ghostsL);
+        // the blur radius is the source size times each ghost's own magnification (read per pixel in the shader), never
+        // under 3 pixels
+        { const minK = (3/H)/Math.max(Math.hypot(k1[0]*2*A, k1[1]*2), 1e-6);
+          gl.uniform1f(gb.u.uKmin, Math.max(minK, 0.05)); gl.uniform1f(gb.u.uLodB, Math.log2(Math.max(1e-3, Rpx/2.4)));
+          gl.uniform1f(gb.u.uLodK, Math.max(1, Math.log2(Math.max(1, Rpx*2)))); }
+        gl.uniform1f(gb.u.uLod, 0); gl.uniform1f(gb.u.uRect, rect); gl.uniform1f(gb.u.uGs, MX.ghostsS); gl.uniform1f(gb.u.uGb, MX.ghostsL);
         full();
       });
       gl.bindTexture(gl.TEXTURE_2D, accRT.t); gl.generateMipmap(gl.TEXTURE_2D);
@@ -3697,8 +3949,9 @@ function render(t){
   if (state.comps.star && phys){
     const s = P.pdiff; gl.useProgram(s.p); gl.bindVertexArray(vaoQuad);
     bindTex(0, visRT.t); gl.uniform1i(s.u.uVis, 0); gl.uniform1i(s.u.uFlick, FLICK_UNIT);
-    gl.uniform1f(s.u.uA, A); gl.uniform1f(s.u.uSpikes, spikes); gl.uniform1f(s.u.uRot, spikeRot); gl.uniform1f(s.u.uBl, IR.blades);
-    gl.uniform1f(s.u.uN, state.t); gl.uniform1f(s.u.uStraight, Math.pow(clamp(stops/3, 0, 1), 1.5)*Math.pow(1 - IR.bladeRound*0.95, 2)); gl.uniform1f(s.u.uHalfH, L.halfH);
+    const straight = Math.pow(clamp(stops/3, 0, 1), 1.5)*Math.pow(1 - IR.bladeRound*0.95, 2);
+    gl.uniform1f(s.u.uA, A);
+    gl.uniform1f(s.u.uN, state.t); gl.uniform1f(s.u.uStraight, straight); gl.uniform1f(s.u.uHalfH, L.halfH);
     gl.uniform1f(s.u.uPxMM, 2/H*L.halfH); gl.uniform1f(s.u.uSqx, L.squeeze);
     gl.uniform1f(s.u.uStarK, L.starK ?? 1); gl.uniform1f(s.u.uStarSoft, L.starSoft ?? 0);
     derived.forEach((d, i) => {
@@ -3707,9 +3960,12 @@ function render(t){
       const sU = d.kind ? Math.max(0.005, 0.3*Math.sqrt(d.ex*d.ey)) : d.size, fs = d.kind ? Math.min(1, Math.PI*sU*sU/d.area) : 1;
       const k = 2*Math.PI*K_TRACE*d.flux*d.kT*(0.4 + 0.6*defK)*fs*MS*MX.star;
       gl.uniform2f(s.u.uL, d.sx, d.sy); gl.uniform1f(s.u.uExt, ext); gl.uniform3f(s.u.uSE, d.ex, d.ey, d.ang);
-      { const lr = Math.hypot(d.sx, d.sy) || 1; gl.uniform3f(s.u.uCat, d.sx/lr, d.sy/lr, Math.min(d.cat, 0.6)); }
+      { const lr = Math.hypot(d.sx, d.sy) || 1, ap = apertureEdges(IR.blades, spikeRot, Math.min(d.cat, 0.6), d.sx/lr, d.sy/lr, (state.lights[i].id*7.31) % 50, straight);
+        const ed = new Float32Array(24*4), ar = new Float32Array(8*4);
+        ap.edges.forEach((e, k) => ed.set(e, k*4)); ap.arcs.forEach((a, k) => ar.set(a, k*4));
+        gl.uniform1i(s.u.uNE, ap.edges.length); gl.uniform4fv(s.u.uEd, ed); gl.uniform1i(s.u.uNA, ap.arcs.length); gl.uniform4fv(s.u.uAr, ar); }
       gl.uniform3f(s.u.uE, d.col[0]*k, d.col[1]*k, d.col[2]*k);
-      gl.uniform1i(s.u.uLi, i); gl.uniform1f(s.u.uAtten, d.atten); gl.uniform1f(s.u.uS, d.kind ? Math.max(0.005, 0.3*Math.sqrt(d.ex*d.ey)) : d.size); gl.uniform1f(s.u.uSeed, (state.lights[i].id*7.31) % 50);
+      gl.uniform1i(s.u.uLi, i); gl.uniform1f(s.u.uAtten, d.atten); gl.uniform1f(s.u.uS, d.kind ? Math.max(0.005, 0.3*Math.sqrt(d.ex*d.ey)) : d.size);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     });
   }
@@ -3756,7 +4012,7 @@ function render(t){
     });
   }
   const rbOn = (MX.rring || 0) + (MX.rrays || 0) + (MX.rspill || 0) > 0;
-  const tricksOn = state.grating?.mode !== 'off' || state.prism?.on || (state.free?.tilt || 0) > 0;
+  const tricksOn = layerTricks() && (state.grating?.mode !== 'off' || state.prism?.on || (state.free?.tilt || 0) > 0);
   if (state.comps.veil || state.comps.dirt || state.comps.barrel || state.leak !== 'off' || rbOn || tricksOn){
     const v = P.veil; gl.useProgram(v.p);
     gl.uniform3fv(v.u.uLe, arrLe); gl.uniform1f(v.u.uTime, t);
@@ -3806,7 +4062,11 @@ function render(t){
   gl.uniform1f(c.u.uSplit, state.compare ? state.split : -1);
   gl.uniform1f(c.u.uBloomW, state.comps.bloom ? bloomW*MX.bloom*Math.min(2, Math.sqrt(MS/0.35)) : 0); gl.uniform1f(c.u.uBloomNorm, bloomNorm);
   gl.uniform1f(c.u.uDist, L.dist);
-  { const te = state.shutter/360/state.fps; gl.uniform2f(c.u.uBlur, camVel.x*te/(2*A), camVel.y*te/2); }
+  { const te = state.shutter/360/state.fps; gl.uniform2f(c.u.uBlur, camVel.x*te/(2*A), camVel.y*te/2);
+    // the brightest light sets the ghost line the flare's motion blur follows
+    let bi = -1, bf = 0; derived.forEach((d, i) => { if (d.flux > bf){ bf = d.flux; bi = i; } });
+    const ax = freeAxis();
+    gl.uniform2f(c.u.uMbAx, ax[0], ax[1]); gl.uniform2f(c.u.uMbL, bi >= 0 ? derived[bi].sx - ax[0] : 0, bi >= 0 ? derived[bi].sy - ax[1] : 0); }
   gl.uniform1f(c.u.uExp, state.ev); gl.uniform1f(c.u.uCA, L.ca); gl.uniform1f(c.u.uVig, L.vignette); gl.uniform1f(c.u.uA, A);
   gl.uniform1f(c.u.uFringe, L.fringe*(1 - 0.85*clamp(stops/4, 0, 1)));
   gl.uniform1f(c.u.uHal, C.halation*(state.comps.bloom ? 1 : 0.6)); gl.uniform1f(c.u.uGrain, C.grain); gl.uniform1f(c.u.uFilm, C.film);
@@ -3883,6 +4143,7 @@ viewport.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
   if (!state.lights.length) return;
   const h = e.target.closest('.handle');
+  if (!h && !e.shiftKey && !e.altKey) return;   // a plain click on the frame never moves a light; Shift- or Alt-click places the selected one
   const [sx, sy] = pointerToScreen(e);
   let ox = 0, oy = 0;
   if (h){
@@ -3911,6 +4172,8 @@ document.addEventListener('keydown', e => {
   if (e.target.closest('input,select,textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === 'h' || e.key === 'H'){ state.handles = !state.handles; $('#showHandles').checked = state.handles; applyHandles(); }
   else if (e.key === 'a' || e.key === 'A'){ openPicker(!pickerOpen); }
+  else if (/^[1-5]$/.test(e.key)){ setLayer(['beauty', 'flare', 'ghosts', 'star', 'glare'][+e.key - 1]); }
+  else if (e.key === 'x' || e.key === 'X'){ abSwitch(abActive === 'A' ? 'B' : 'A'); }
   else if (e.key === 'Escape' && pickerOpen){ openPicker(false); }
   else if ((e.key === 'Delete' || e.key === 'Backspace') && state.lights.length){ e.preventDefault(); removeLight(state.sel); }
 });
@@ -3971,7 +4234,7 @@ function renderLightList(){
     const where = (Math.abs(sx) > A || Math.abs(sy) > 1) ? 'off frame' : 'in frame';
     return `<div class="light-row"><button type="button" class="light-item" data-i="${i}" aria-pressed="${i === state.sel}">
       <span class="sw" style="background:${swatch(l)};box-shadow:0 0 10px ${swatch(l)}"></span>
-      <span>${l.name ? l.name.replace(/[<>&]/g, '') + ' · ' : ''}${typeLabel(l.type)}</span><span class="meta">${colorLabel(l)} · ${T.dref ? fmtDist(l.dist) + ' · ' : ''}${where}</span></button><button type="button" class="light-x" data-x="${i}" aria-label="Remove ${typeLabel(l.type)}" title="Remove (Delete)">×</button></div>`;
+      <span>${l.name ? l.name.replace(/[<>&]/g, '') + ' · ' : ''}${typeLabel(l.type)}</span><span class="meta">${colorLabel(l)} · ${T.dref ? fmtDist(l.dist) + ' · ' : ''}${where}</span></button><button type="button" class="sm" data-solo="${i}" aria-pressed="${state.lightSolo === l.id}" title="Solo: only this light's flare">S</button><button type="button" class="sm mute" data-mute="${i}" aria-pressed="${!!l.mute}" title="Mute this light's flare (the light itself stays)">M</button><button type="button" class="light-x" data-x="${i}" aria-label="Remove ${typeLabel(l.type)}" title="Remove (Delete)">×</button></div>`;
   }).join('');
   $('#lightCount').textContent = `${state.lights.length} / 4`;
   $('#addLight').disabled = state.lights.length >= 4;
@@ -3983,14 +4246,15 @@ function renderEditor(){
   ed.innerHTML = `
     ${l.name ? `<p class="sub">Imported as <b>${l.name.replace(/[<>&]/g, '')}</b></p>` : ''}
     <div class="field"><span>Source type</span><select id="eType" aria-label="Source type">${typeOptions(l.type)}</select></div>
-    <div class="row"><label for="eFg">Flare gain</label><input type="range" id="eFg" min="-6" max="6" step="0.25" value="${l.flareGain || 0}"><output id="eFgOut">${fmtEV(l.flareGain || 0)} st</output></div>
-    <div class="row"><label for="eEv">Output</label><input type="range" id="eEv" min="-5" max="3" step="0.1" value="${l.ev}"><output id="eEvOut">${fmtEV(l.ev)} EV</output></div>
+    <div class="row"><label for="eFg">Flare gain</label><input type="range" id="eFg" min="-6" max="6" step="0.25" value="${l.flareGain || 0}" data-def="0"><output id="eFgOut">${fmtEV(l.flareGain || 0)} st</output></div>
+    <div class="row"><label for="eEv">Output</label><input type="range" id="eEv" min="-5" max="3" step="0.1" value="${l.ev}" data-def="0"><output id="eEvOut">${fmtEV(l.ev)} EV</output></div>
     ${T.colors ? `<div class="field"><span>Color</span><select id="eCol" aria-label="Color">${T.colors.map(c => `<option value="${c}" ${c === l.color ? 'selected' : ''}>${COLOR_OPTS[c].label}</option>`).join('')}</select></div>`
-      : `<div class="row"><label for="eK">Color temp</label><input type="range" id="eK" min="1800" max="10000" step="50" value="${l.kelvin}" ${kel ? '' : 'disabled'}><output id="eKOut">${colorLabel(l)}</output></div>`}
-    <div class="row"><label for="eSize">Source size</label><input type="range" id="eSize" min="0.4" max="2.5" step="0.05" value="${l.sizeMul}"><output id="eSizeOut">${l.sizeMul.toFixed(2)}×</output></div>
-    ${T.dref ? `<div class="row"><label for="eDist">Distance</label><input type="range" id="eDist" min="0" max="100" step="1" value="${distToSlider(l.dist)}"><output id="eDistOut">${fmtDist(l.dist)}</output></div>` : ''}
-    ${T.rot ? `<div class="row"><label for="eAng">Rotation</label><input type="range" id="eAng" min="-90" max="90" step="1" value="${l.angle || 0}"><output id="eAngOut">${l.angle || 0}°</output></div>` : ''}
-    ${T.beam ? `<div class="row"><label for="eAim">Aim off lens</label><input type="range" id="eAim" min="0" max="90" step="1" value="${l.aim}"><output id="eAimOut">${l.aim}°</output></div>
+      : `<div class="row"><label for="eK">Color temp</label><input type="range" id="eK" min="1800" max="10000" step="50" value="${l.kelvin}" data-def="${T.kelvin || l.kelvin}" ${kel ? '' : 'disabled'}><output id="eKOut">${colorLabel(l)}</output></div>`}
+    <div class="row"><label for="eSize">Source size</label><input type="range" id="eSize" min="0.4" max="2.5" step="0.05" value="${l.sizeMul}" data-def="1"><output id="eSizeOut">${l.sizeMul.toFixed(2)}×</output></div>
+    ${T.dref ? `<div class="row"><label for="eDist">Distance</label><input type="range" id="eDist" min="0" max="100" step="1" value="${distToSlider(l.dist)}" data-def="${distToSlider(T.dref)}"><output id="eDistOut">${fmtDist(l.dist)}</output></div>` : ''}
+    ${T.rot ? `<div class="row"><label for="eAng">Rotation</label><input type="range" id="eAng" min="-90" max="90" step="1" value="${l.angle || 0}" data-def="${T.rotDef || 0}"><output id="eAngOut">${l.angle || 0}°</output></div>` : ''}
+    ${T.beam ? `<div class="row"><label for="eAim">Aim off lens</label><input type="range" id="eAim" min="0" max="90" step="1" value="${l.aim}" data-def="${T.aim ?? 0}"><output id="eAimOut">${l.aim}°</output></div>
+      <div class="row"><label for="eDir">Aim direction</label><input type="range" id="eDir" min="-180" max="180" step="5" value="${l.dir ?? T.dir ?? -90}" data-def="${T.dir ?? -90}"><output id="eDirOut">${dirLabel(l.dir ?? T.dir ?? -90)}</output></div>
       <p class="sub">${T.beam < 6 ? 'A narrow beam' : 'A beam'} (±${T.beam}°): it flares hardest when aimed straight into the lens and fades fast as it turns away.</p>` : ''}
     ${T.flick === 'ballast'
       ? `<div class="field"><span id="ballLbl">Ballast</span><div class="seg" role="radiogroup" aria-labelledby="ballLbl" id="eBallast"></div><p class="sub">Magnetic ballasts pulse at twice the mains frequency.</p></div>`
@@ -4016,7 +4280,11 @@ function renderEditor(){
 }
 const dirLabel = d => { const n = ((d % 360) + 360) % 360; return ['Right', 'Up-right', 'Up', 'Up-left', 'Left', 'Down-left', 'Down', 'Down-right'][Math.round(n/45) % 8]; };
 function renderLightPanel(){ renderLightList(); renderEditor(); updateOSD(); }
-$('#lightList').addEventListener('click', e => { const x = e.target.closest('.light-x'); if (x){ removeLight(+x.dataset.x); return; } const b = e.target.closest('.light-item'); if (!b) return; state.sel = +b.dataset.i; renderLightPanel(); });
+$('#lightList').addEventListener('click', e => {
+  const so = e.target.closest('[data-solo]'), mu = e.target.closest('[data-mute]');
+  if (so){ const l = state.lights[+so.dataset.solo]; state.lightSolo = state.lightSolo === l.id ? null : l.id; renderLightList(); return; }
+  if (mu){ const l = state.lights[+mu.dataset.mute]; l.mute = !l.mute; renderLightList(); return; }
+  const x = e.target.closest('.light-x'); if (x){ removeLight(+x.dataset.x); return; } const b = e.target.closest('.light-item'); if (!b) return; state.sel = +b.dataset.i; renderLightPanel(); });
 $('#addType').innerHTML = typeOptions('sun');
 $('#addLight').onclick = () => {
   if (state.lights.length >= 4) return;
@@ -4171,7 +4439,7 @@ $('#clearPlate').addEventListener('click', () => { state.scene = 'black'; syncSh
 const FEATURE_PLATES = false;
 if (FEATURE_PLATES){ $('#plateUI').hidden = false; $('#screenUI').hidden = false; $('#importBtn').hidden = false; document.querySelector('.empty-s').hidden = false; }
 viewport.addEventListener('dragover', e => { e.preventDefault(); });
-viewport.addEventListener('drop', e => { e.preventDefault(); const fl = [...((e.dataTransfer && e.dataTransfer.files) || [])]; if (fl.length && fl.every(f => /\.exr$/i.test(f.name))){ loadShotFiles(fl); return; } if (!FEATURE_PLATES) return; const f = fl[0]; if (!f) return; if (/\.json$/i.test(f.name)) importFile(f); else loadPlateFile(f); });
+viewport.addEventListener('drop', e => { e.preventDefault(); const fl = [...((e.dataTransfer && e.dataTransfer.files) || [])]; if (fl.length && fl.every(f => /\.exr$/i.test(f.name))){ loadShotFiles(fl); return; } const f = fl[0]; if (!f) return; if (/\.json$/i.test(f.name)){ importFile(f); return; } if (!FEATURE_PLATES) return; loadPlateFile(f); });
 $('#plateEV').addEventListener('input', e => { state.plateEV = +e.target.value; $('#plateEVOut').textContent = fmtEV(state.plateEV); });
 $('#pan').addEventListener('input', e => { state.pan = +e.target.value; $('#panOut').textContent = state.pan + '°'; });
 $('#tilt').addEventListener('input', e => { state.tilt = +e.target.value; $('#tiltOut').textContent = state.tilt + '°'; });
@@ -4891,7 +5159,9 @@ async function shotFromEXRs(files){
   const fstop = num(/f_?stop$|fnumber|f_?number$/i), focus = num(/focus_?distance$/i);
   return Object.assign(S, { name: files.map(f => f.name).join(' + '), aspect: W/H*(+meta.pixelAspectRatio || 1), units, cam,
     meta: { focal: focal || null, fstop: fstop > 0.5 && fstop < 64 ? fstop : null, focusM: focus > 0 ? focus*units : null },
-    channels: found.join(', '), depthName });
+    channels: found.join(', '), depthName,
+    // the camera and tagged lights the pipeline writes into the header (see houdini/flare_bench_export.py)
+    flareShot: typeof meta['flare/shot'] === 'string' ? meta['flare/shot'] : null });
 }
 /* ---- the shot on the GPU: the buffers as textures, lit by the flare lights into the plate the flare sits over ---- */
 const FS_SHOT = `#version 300 es
@@ -5049,8 +5319,10 @@ function shotShade(){
   gl.bindTexture(gl.TEXTURE_2D, shotGL.rt.t); gl.generateMipmap(gl.TEXTURE_2D);
 }
 /* the visibility and emitter passes test each light against the shot's depth */
+const NEAR_OCC_M = 5;   // occluders nearer than this are resolved ray by ray across the lens opening (traced ghosts)
 function shotVisUniforms(pr){
   const on = shotOn(), ld = new Float32Array(4);
+  gl.uniform1f(pr.u.uNearU, on ? NEAR_OCC_M/shotUnits() : 0);
   if (on) state.lights.slice(0, 4).forEach((l, i) => { const T = LIGHT_TYPES[l.type]; ld[i] = T.dref && isFinite(l.dist) ? l.dist/shotUnits() : -1; });
   bindTex(6, shotDepthTex()); gl.uniform1i(pr.u.uGP, 6);
   gl.uniform1f(pr.u.uShot, on ? 1 : 0); gl.uniform1f(pr.u.uShotAsp, on ? SHOT.S.aspect : 1); gl.uniform1fv(pr.u.uLd, ld);
@@ -5118,7 +5390,9 @@ async function loadShotFiles(files){
   SHOT.busy = true; shotInfo('Reading ' + files.map(f => f.name).join(' + ') + '…');
   try {
     const bufs = await Promise.all(files.map(async f => ({ name: f.name, buf: await f.arrayBuffer() })));
-    useShot(await shotFromEXRs(bufs), 'file', true);
+    const S = await shotFromEXRs(bufs);
+    useShot(S, 'file', true);
+    if (S.flareShot){ try { importLook(JSON.parse(S.flareShot)); } catch (e){ console.warn('flare/shot metadata unreadable', e); } }
   } catch (e){ console.error(e); SHOT.busy = false; shotInfo('Could not use that: ' + e.message + '.'); }
 }
 function clearShot(){ SHOT.on = false; SHOT.S = null; state.scene = 'black'; state.shotKind = ''; state.lights = []; state.focal = null; layout(); onLensChange(); syncFocal(); syncHandles(); renderLightPanel(); syncShotUI2(); placeHandles(); needsFrame = true; }
@@ -5175,7 +5449,7 @@ function trickUniforms(v, L, MS, MX, AX){
   gl.uniform1fv(v.u.uLsz, sz);
   // grating: lines per mm -> groove spacing in micrometres
   const G = state.grating || {};
-  gl.uniform4f(v.u.uGr, G.mode && G.mode !== 'off' ? (G.amt ?? 1) : 0, 1000/(G.lpmm || 150), (G.rot || 0)*Math.PI/180, G.mode === 'cross' ? 1 : 0);
+  gl.uniform4f(v.u.uGr, G.mode && G.mode !== 'off' && layerTricks() ? (G.amt ?? 1) : 0, 1000/(G.lpmm || 150), (G.rot || 0)*Math.PI/180, G.mode === 'cross' ? 1 : 0);
   // prism
   const P = state.prism || {};
   if (P.on){
@@ -5186,7 +5460,7 @@ function trickUniforms(v, L, MS, MX, AX){
     const r = P.rot*Math.PI/180; gl.uniform3f(v.u.uPrE, Math.cos(r), Math.sin(r), P.cov ?? 0.5);
   }
   // strength in stops: 0 is all the light the prism passes
-  gl.uniform1f(v.u.uPrAmt, P.on ? Math.pow(2, P.amt ?? -8) : 0); gl.uniform3fv(v.u.uPrP, pp); gl.uniform1fv(v.u.uPrR, pr);
+  gl.uniform1f(v.u.uPrAmt, P.on && layerTricks() ? Math.pow(2, P.amt ?? -8) : 0); gl.uniform3fv(v.u.uPrP, pp); gl.uniform1fv(v.u.uPrR, pr);
   // stray light off the baffle and the front element's bevel: the front element's own glass for the bevel's dispersion
   let front = null;
   try { const TS = lensSystem(); front = TS.sys.S.find(q => q.nd > 1.0001); } catch (e){}
@@ -5231,6 +5505,185 @@ function syncTricks(){
   $('#freeTilt').addEventListener('input', e => { state.free.tilt = +e.target.value; syncTricks(); });
   $('#freeDir').addEventListener('input', e => { state.free.dir = +e.target.value; syncTricks(); });
   syncTricks();
+}
+/* ---- per-ghost overrides: physically driven by default, with a surgical fix for the one ghost on a face ----
+   Each override belongs to one optical path (a pair of reflecting surfaces) of one lens on one camera back; it applies
+   to that path's ghost from every light. */
+const ghostKey = (TS, g) => `${lensOf().id}|${camOf().film ? 'film' : 'digital'}|${state.filter === 'clear' ? 'clear' : ''}|${g.a}-${g.b}`;
+let govTex = null, govSig = '', govFor = null;
+function ghostOvTex(TS){
+  const ov = state.ghostOv || {}, solo = state.ghostSolo;
+  const sig = JSON.stringify([TS.list.length, TS.list.map(g => ghostKey(TS, g)).join(), ov, solo]);
+  if (govTex && sig === govFor) return govTex;
+  const data = new Float32Array(128*2*4);
+  TS.list.forEach((g, i) => {
+    const k = ghostKey(TS, g), o = ov[k];
+    let gain = o ? (o.g <= -8 ? 0 : Math.pow(2, o.g)) : 1;
+    if (solo && solo !== k) gain = 0;
+    const t = o && o.tint ? hexLin(o.tint) : [1, 1, 1];
+    data.set([gain*t[0], gain*t[1], gain*t[2], 1], i*4);
+    data.set([o ? o.dx || 0 : 0, o ? o.dy || 0 : 0, 0, 0], 512 + i*4);
+  });
+  if (!govTex) govTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, govTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 128, 2, 0, gl.RGBA, gl.FLOAT, data);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  govFor = sig; govSig = sig.length + ':' + [...sig].reduce((h, c) => (h*31 + c.charCodeAt(0)) | 0, 0);
+  return govTex;
+}
+const hexLin = h => { const v = parseInt(h.slice(1), 16), c = x => { x /= 255; return x <= 0.04045 ? x/12.92 : Math.pow((x + 0.055)/1.055, 2.4); }; return [c(v >> 16 & 255), c(v >> 8 & 255), c(v & 255)]; };
+/* which surface is which, in words */
+function surfaceName(TS, k){
+  const S = TS.sys.S, nL = TS.nLens;
+  if (k >= nL){
+    const back = S.slice(nL), j = k - nL, sens = S[k].sensor;
+    if (sens) return 'the sensor';
+    return camOf().film ? 'the film' : ['the front of the IR-cut filter', 'the back of the IR-cut filter', 'the front of the cover glass', 'the back of the cover glass'][j] || 'the camera back';
+  }
+  let el = 0; const glass = q => q.nd > 1.0001;
+  for (let i = 0; i <= k; i++) if (glass(S[i]) && (i === 0 || !glass(S[i - 1]))) el++;
+  const inG = glass(S[k]), prevG = k > 0 && glass(S[k - 1]);
+  // count elements, not groups: a cemented pair is two elements
+  let e = 0; for (let i = 0; i <= k; i++) if (glass(S[i])) e++;
+  if (inG && prevG) return `the cemented join of elements ${e - 1} and ${e}`;
+  if (inG) return `the front of element ${e}`;
+  return `the back of element ${e}`;
+}
+let pickMode = false;
+$('#pickGhost').addEventListener('click', () => {
+  if (state.mode === 'artistic'){ $('#ghostOvInfo').textContent = 'Picking ghosts works on the traced ghosts: switch the flare model to Ray-traced or Hybrid.'; return; }
+  pickMode = !pickMode; document.body.classList.toggle('picking', pickMode);
+  $('#pickGhost').textContent = pickMode ? 'Click a ghost…' : 'Pick a ghost';
+});
+/* find the traced ghost under a point of the frame: trace each path's footprint for every light in JS and keep the
+   brightest one (energy over area) that covers the point */
+function pickGhostAt(fx, fy){
+  const TS = lensSystem(), L = lensOf(), S = TS.sys.S, ax = freeAxis();
+  const stopR = TS.hStop*TS.nfull/state.t, apR = stopR/TS.hStop;
+  let best = null;
+  derived.forEach((d, li) => {
+    if (!(d.flux > 0)) return;
+    const dir = lightDir(TS.sys, L, d.sx - ax[0], d.sy - ax[1]);
+    TS.list.forEach((g, gi) => {
+      const gs = g.mode ? apR : Math.max(apR, 1), pts = [];
+      let E = 0;
+      for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++){
+        const ux = i/4 - 1, uy = j/4 - 1; if (ux*ux + uy*uy > 1) continue;
+        const r = traceRay(S, TS.sys, rayOrigin(TS.sys, dir, ux, uy, gs), dir, 0.55, g.a, g.b, stopR);
+        if (!r || r.maxRel > 1) continue;
+        pts.push([-r.x*L.squeeze/L.halfH + ax[0], -r.y/L.halfH + ax[1]]); E += r.T;
+      }
+      if (pts.length < 3) return;
+      const mx = pts.reduce((s, p) => s + p[0], 0)/pts.length, my = pts.reduce((s, p) => s + p[1], 0)/pts.length;
+      const rad = Math.max(0.02, ...pts.map(p => Math.hypot(p[0] - mx, p[1] - my)))*1.08 + d.size*Math.hypot(g.kx, g.ky)*0.7;
+      if (Math.hypot(fx - mx, fy - my) > rad) return;
+      const score = E/pts.length/(rad*rad);
+      if (!best || score > best.score) best = { score, g, gi, li, mx, my, rad, T: E/pts.length };
+    });
+  });
+  return best;
+}
+function showGhostPop(hit, clientX, clientY){
+  const pop = $('#ghostPop'), TS = lensSystem();
+  if (!hit){ pop.hidden = false; pop.innerHTML = `<button class="x" type="button" aria-label="Close">✕</button><h4>No ghost here</h4><p>Nothing traced lands on that point. Click inside a ghost's disc or ring.</p>`; }
+  else {
+    const k = ghostKey(TS, hit.g), o = (state.ghostOv || {})[k] || { g: 0, tint: '#ffffff', dx: 0, dy: 0 };
+    const sa = TS.sys.S[hit.g.a], sb = TS.sys.S[hit.g.b];
+    const R = (s, k2) => { const n1 = mediumAfter(TS.sys.S, k2 - 1, 0.55), n2 = mediumAfter(TS.sys.S, k2, 0.55); return surfaceR(s, n1, n2, 1, 0.55); };
+    const ra = R(sa, hit.g.a), rb = R(sb, hit.g.b);
+    const pc = v => (v*100 < 0.1 ? (v*100).toFixed(2) : (v*100).toFixed(1)) + '%';
+    pop.hidden = false;
+    pop.innerHTML = `<button class="x" type="button" aria-label="Close">✕</button>
+      <h4>Ghost ${hit.gi + 1} of ${TS.list.length}</h4>
+      <p>Light reflects back off ${surfaceName(TS, hit.g.a)} (${pc(ra)} at 550 nm), then forward again off ${surfaceName(TS, hit.g.b)} (${pc(rb)}).
+      ${hit.g.mode ? 'Both reflections are behind the iris.' : 'Both reflections are in front of the iris.'} It applies to this ghost from every light.</p>
+      <div class="row"><label for="gpG">Gain</label><input type="range" id="gpG" min="-8" max="3" step="0.25" value="${o.g}" data-def="0"><output id="gpGo">${o.g <= -8 ? 'Off' : fmtEV(o.g) + ' st'}</output></div>
+      <div class="row"><label for="gpT">Tint</label><input type="color" id="gpT" value="${o.tint || '#ffffff'}"><output></output></div>
+      <div class="row"><label for="gpX">Nudge →</label><input type="range" id="gpX" min="-0.3" max="0.3" step="0.005" value="${o.dx || 0}" data-def="0"><output id="gpXo">${(o.dx || 0).toFixed(3)}</output></div>
+      <div class="row"><label for="gpY">Nudge ↑</label><input type="range" id="gpY" min="-0.3" max="0.3" step="0.005" value="${o.dy || 0}" data-def="0"><output id="gpYo">${(o.dy || 0).toFixed(3)}</output></div>
+      <label class="switch"><span>Solo this ghost</span><input type="checkbox" id="gpS" ${state.ghostSolo === k ? 'checked' : ''}></label>
+      <div class="btns"><button type="button" class="btn" id="gpR">Reset this ghost</button></div>`;
+    const set = patch => { state.ghostOv = { ...(state.ghostOv || {}) }; state.ghostOv[k] = { ...o, ...patch }; Object.assign(o, patch);
+      const q = state.ghostOv[k]; if (!q.g && (q.tint || '#ffffff') === '#ffffff' && !q.dx && !q.dy) delete state.ghostOv[k]; syncGhostOvInfo(); needsFrame = true; };
+    pop.querySelector('#gpG').oninput = e => { set({ g: +e.target.value }); $('#gpGo').textContent = o.g <= -8 ? 'Off' : fmtEV(o.g) + ' st'; };
+    pop.querySelector('#gpT').oninput = e => set({ tint: e.target.value });
+    pop.querySelector('#gpX').oninput = e => { set({ dx: +e.target.value }); $('#gpXo').textContent = o.dx.toFixed(3); };
+    pop.querySelector('#gpY').oninput = e => { set({ dy: +e.target.value }); $('#gpYo').textContent = o.dy.toFixed(3); };
+    pop.querySelector('#gpS').onchange = e => { state.ghostSolo = e.target.checked ? k : null; needsFrame = true; };
+    pop.querySelector('#gpR').onclick = () => { set({ g: 0, tint: '#ffffff', dx: 0, dy: 0 }); showGhostPop(hit, clientX, clientY); };
+    xrayGhost = hit.g;
+  }
+  const vr = $('#viewport').getBoundingClientRect();
+  pop.style.left = Math.min(Math.max(8, clientX - vr.left + 14), vr.width - 272) + 'px';
+  pop.style.top = Math.min(Math.max(8, clientY - vr.top + 14), vr.height - pop.offsetHeight - 8) + 'px';
+  pop.querySelector('.x').onclick = () => { pop.hidden = true; state.ghostSolo = null; needsFrame = true; };
+}
+['pointerdown', 'click', 'dblclick'].forEach(ev => $('#ghostPop').addEventListener(ev, e => e.stopPropagation()));
+$('#viewport').addEventListener('pointerdown', e => {
+  if (!pickMode || e.button !== 0 || e.target.closest('#ghostPop')) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  pickMode = false; document.body.classList.remove('picking'); $('#pickGhost').textContent = 'Pick a ghost';
+  const [fx, fy] = pointerToScreen(e);
+  showGhostPop(pickGhostAt(fx, fy), e.clientX, e.clientY);
+}, true);
+function syncGhostOvInfo(){
+  const n = Object.keys(state.ghostOv || {}).length;
+  $('#ghostOvInfo').innerHTML = n ? `${n} ghost${n === 1 ? '' : 's'} adjusted by hand · <a href="#" id="govReset">reset all</a>` : '';
+  const r = $('#govReset'); if (r) r.onclick = e => { e.preventDefault(); state.ghostOv = {}; state.ghostSolo = null; $('#ghostPop').hidden = true; syncGhostOvInfo(); needsFrame = true; };
+}
+syncGhostOvInfo();
+/* ---- Lens X-ray: the prescription drawn to scale, with live rays ---- */
+let xrayGhost = null, xraySig = '';
+function drawXray(){
+  const cv = $('#xray'); if (!cv || $('#xrayGroup').classList.contains('collapsed') || document.body.classList.contains('present')) return;
+  let TS; try { TS = lensSystem(); } catch (e){ return; }
+  const L = lensOf(), S = TS.sys.S, l = state.lights[state.sel], d = derived[state.sel];
+  const stopR = TS.hStop*TS.nfull/state.t;
+  const sig = [L.id, state.t, state.coating, d ? d.sx.toFixed(3) + d.sy.toFixed(3) : '', xrayGhost ? xrayGhost.a + '-' + xrayGhost.b : '', TS.list.length, state.focus].join('|');
+  if (sig === xraySig) return; xraySig = sig;
+  const ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  const z0 = S[0].z - 6, z1 = TS.sys.zs + 3, hmax = Math.max(...S.map(q => q.h))*1.15;
+  const sc = Math.min((W - 30)/(z1 - z0), (H - 20)/(2*hmax)), x0 = (W - (z1 - z0)*sc)/2, X = z => x0 + (z - z0)*sc, Y = y => H/2 - y*sc;
+  const sag = (q, y) => q.R ? q.R - Math.sign(q.R)*Math.sqrt(Math.max(0, q.R*q.R - y*y)) : 0;
+  const prof = (q, h) => { const pts = []; for (let i = 0; i <= 24; i++){ const y = -h + 2*h*i/24; pts.push([q.z + (q.cyl ? 0 : sag(q, y)), y]); } return pts; };
+  // glass
+  for (let k = 0; k < S.length - 1; k++){
+    if (!(S[k].nd > 1.0001)) continue;
+    const h = Math.min(S[k].h, S[k + 1].h), a = prof(S[k], h), b = prof(S[k + 1], h).reverse();
+    ctx.beginPath(); [...a, ...b].forEach(([z, y], i) => i ? ctx.lineTo(X(z), Y(y)) : ctx.moveTo(X(z), Y(y))); ctx.closePath();
+    ctx.fillStyle = k >= TS.nLens ? 'rgba(150,170,200,.10)' : 'rgba(150,190,230,.16)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(170,200,235,.55)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  // iris and sensor
+  const st = S[TS.sys.si]; ctx.strokeStyle = '#d8d2c4'; ctx.lineWidth = 2;
+  [[stopR, st.h*1.1], [-stopR, -st.h*1.1]].forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(X(st.z), Y(a)); ctx.lineTo(X(st.z), Y(b)); ctx.stroke(); });
+  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.moveTo(X(TS.sys.zs), Y(-L.halfH)); ctx.lineTo(X(TS.sys.zs), Y(L.halfH)); ctx.stroke();
+  if (!d){ $('#xrayInfo').textContent = 'Add a light to see its rays.'; return; }
+  // the light's field angle, drawn in the plane through the axis and the light
+  const fr = Math.hypot(d.sx, d.sy), dir = lightDir(TS.sys, L, 0, fr), apR = stopR/TS.hStop;
+  const draw = (a, b, gs, col, n) => {
+    let hits = 0;
+    for (let i = 0; i < n; i++){
+      const uy = -0.92 + 1.84*i/(n - 1), path = [];
+      const r = traceRay(S, TS.sys, rayOrigin(TS.sys, dir, 0, uy, gs), dir, 0.55, a, b, stopR, -1, path);
+      const ok = r && r.maxRel <= 1; if (ok) hits++;
+      ctx.strokeStyle = ok ? col : 'rgba(255,255,255,.10)'; ctx.lineWidth = ok ? 1.1 : 0.7;
+      if (path.length < 2) continue;
+      // start where the ray enters the drawing, on its way in
+      const [p0, p1] = path, f = (z0 - p0[2])/((p1[2] - p0[2]) || 1);
+      ctx.beginPath(); ctx.moveTo(X(z0), Y(p0[1] + (p1[1] - p0[1])*f));
+      path.slice(1).forEach(([x, y, z]) => ctx.lineTo(X(z), Y(y))); ctx.stroke();
+    }
+    return hits;
+  };
+  const c = d.col.map(v => v/Math.max(...d.col, 1e-6)), lc = `rgba(${c.map(v => Math.round(140 + 115*v)).join(',')},.55)`;
+  draw(-1, -1, apR, lc, 9);
+  const g = xrayGhost && TS.list.find(q => q.a === xrayGhost.a && q.b === xrayGhost.b) || TS.list.filter(q => q.a < TS.nLens).reduce((m, q) => (!m || q.score > m.score ? q : m), null);
+  if (g){
+    const n = draw(g.a, g.b, g.mode ? apR : Math.max(apR, 1), 'rgba(242,166,74,.85)', 11);
+    $('#xrayInfo').textContent = `${S.filter(q => q.nd > 1.0001).length} glass elements at T${state.t}. Amber: the ghost between ${surfaceName(TS, g.a)} and ${surfaceName(TS, g.b)}${xrayGhost ? ' (picked)' : ' (the strongest inside the lens)'}; ${n} of 11 of its rays get through.`;
+  }
 }
 /* ---- before / after wipe ---- */
 function syncWipe(){ $('#wipe').hidden = !state.compare; $('#wipe').style.left = (state.split*100) + '%'; $('#compare').checked = state.compare; }
@@ -5278,7 +5731,11 @@ function importLook(o){
   if (lights.length){
     state.lights = [];
     for (const d of lights.slice(0, 4)){
-      const type = LIGHT_TYPES[d.type] ? d.type : 'hmi';
+      // a type the picker no longer lists maps to its nearest essential light; no type at all: the sun for a light at
+      // infinity, otherwise a bare bulb
+      const LEGACY = { hmi: 'followspot', hmipar: 'followspot', parcan: 'followspot', movinghead: 'followspot', tungsten: 'filament', practical: 'filament', globe: 'filament', halogen: 'led', hid: 'led', torch: 'flashlight', ledtorch: 'flashlight', moon: 'sun' };
+      let type = LIGHT_TYPES[d.type] ? d.type : (d.distance_m > 0 ? 'filament' : 'sun');
+      if (!ESS_LABEL[type] && LEGACY[type]) type = LEGACY[type];
       // ndc is relative to the rendered image: with a plate loaded, map through the plate's own framing
       const hasP = state.scene === 'custom' && plate.tex && !plate.pano, ai = hasP ? plate.aspect : A, fit = hasP ? Math.max(1, A/ai) : 1;
       const pos = d.frame ? d.frame : d.ndc ? [(d.ndc[0] - 0.5)*2*ai*fit, (d.ndc[1] - 0.5)*2*fit] : [0, 0];
@@ -5329,8 +5786,13 @@ const MIX = [['ghostsS', 'Small ghosts', 'Dots and small discs'], ['ghostsL', 'L
 const MIX_DEF = { ghostsS: 1, ghostsL: 1, rainbow: 0, rring: 0, star: 1, streak: 1, glare: 1, dirt: 1, barrel: 1, bloom: 1, sensor: 0 };
 const mixOut = v => v < 0.01 ? 'Off' : '×' + v.toFixed(v < 1 ? 2 : 1);
 function buildMix(){
-  $('#mixRows').innerHTML = MIX.map(([k, n, tip]) => `<div class="row mix" title="${tip}"><label for="mx_${k}">${n}</label><input type="range" id="mx_${k}" data-k="${k}" min="0" max="2" step="0.05" value="${state.mix[k] ?? MIX_DEF[k]}"><output>${mixOut(state.mix[k] ?? MIX_DEF[k])}</output></div>`).join('');
+  $('#mixRows').innerHTML = MIX.map(([k, n, tip]) => `<div class="row mix sm2" title="${tip}"><label for="mx_${k}">${n}</label><input type="range" id="mx_${k}" data-k="${k}" min="0" max="2" step="0.05" data-def="${MIX_DEF[k]}" value="${state.mix[k] ?? MIX_DEF[k]}"><output>${mixOut(state.mix[k] ?? MIX_DEF[k])}</output><span class="smp"><button type="button" class="sm" data-msolo="${k}" aria-pressed="${state.mixSolo === k}" title="Solo this element">S</button><button type="button" class="sm mute" data-mmute="${k}" aria-pressed="${!!(state.mixMute || {})[k]}" title="Mute this element">M</button></span></div>`).join('');
 }
+$('#mixRows').addEventListener('click', e => {
+  const so = e.target.closest('[data-msolo]'), mu = e.target.closest('[data-mmute]');
+  if (so){ const k = so.dataset.msolo; state.mixSolo = state.mixSolo === k ? null : k; buildMix(); }
+  else if (mu){ const k = mu.dataset.mmute; state.mixMute = { ...(state.mixMute || {}), [k]: !(state.mixMute || {})[k] }; buildMix(); }
+});
 $('#mixRows').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; state.mix[k] = +e.target.value; e.target.nextElementSibling.textContent = mixOut(state.mix[k]); });
 $('#mixReset').addEventListener('click', () => { state.mix = { ...MIX_DEF }; state.washSize = 1; buildMix(); syncWash(); });
 function syncWash(){ $('#washSize').value = state.washSize ?? 1; $('#washSizeOut').textContent = (+(state.washSize ?? 1)).toFixed(2) + '×'; }
@@ -5344,7 +5806,66 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 53;
+const APP_VERSION = 54;
+/* ---- layer view ---- */
+function setLayer(v){ state.layer = v; $('#layerSel').value = v; needsFrame = true; }
+$('#layerSel').addEventListener('change', e => setLayer(e.target.value));
+/* ---- A/B looks: two sets of look settings over the same shot and lights. The active slot follows what you change;
+   clicking the other slot keeps this one and switches. ---- */
+const LOOK_SKIP = ['lights', 'sel', 'scene', 'shotKind', 'compare', 'split', 'handles', 'showSrc', 'showSet', 'layer', 'lightSolo', 'mixSolo', 'mixMute',
+  'focal', 'focus', 'autoFocus', 'pan', 'tilt', 'plateEV', 'motion', 'fps', 'shutter', 'mains', 'camera'];
+const lookOnly = () => { const o = JSON.parse(JSON.stringify(state, (k, v) => v === Infinity ? 'Infinity' : v)); LOOK_SKIP.forEach(k => delete o[k]); return o; };
+let abActive = 'A'; const abSlots = { A: null, B: null };
+function abSwitch(to){
+  if (to === abActive) return;
+  abSlots[abActive] = lookOnly();
+  if (abSlots[to]) applyLook({ app: 'Flare Bench', state: abSlots[to] });
+  else abSlots[to] = lookOnly();
+  abActive = to; syncAB();
+}
+function syncAB(){ ['A', 'B'].forEach(k => { const b = $('#ab' + k); b.setAttribute('aria-pressed', String(abActive === k)); b.classList.toggle('has', !!abSlots[k]); }); }
+$('#abA').addEventListener('click', () => abSwitch('A')); $('#abB').addEventListener('click', () => abSwitch('B'));
+syncAB();
+/* ---- undo / redo: every settled change to the settings (lights included) is kept, 50 steps back ---- */
+const hist = { list: [], pos: -1, busy: false, timer: 0 };
+const histSnap = () => JSON.stringify(state, (k, v) => v === Infinity ? 'Infinity' : (k === 'layer' ? undefined : v));
+function histPush(){
+  if (hist.busy) return;
+  const sn = histSnap();
+  if (sn === hist.list[hist.pos]) return;
+  hist.list = hist.list.slice(0, hist.pos + 1); hist.list.push(sn);
+  if (hist.list.length > 50) hist.list.shift();
+  hist.pos = hist.list.length - 1;
+}
+function histGo(dir){
+  const to = hist.pos + dir;
+  if (to < 0 || to >= hist.list.length) return;
+  hist.pos = to; hist.busy = true;
+  try { const st = JSON.parse(hist.list[to]); st.layer = state.layer; applyLook({ app: 'Flare Bench', state: st }); syncHandles(); renderLightPanel(); }
+  finally { setTimeout(() => { hist.busy = false; }, 400); }
+}
+['change', 'pointerup', 'keyup'].forEach(ev => document.addEventListener(ev, () => { clearTimeout(hist.timer); hist.timer = setTimeout(histPush, 350); }, true));
+document.addEventListener('keydown', e => {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  const t = e.target; if (t.closest && t.closest('select, textarea, input:not([type=range]):not([type=checkbox]):not([type=radio])')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z'){ e.preventDefault(); histGo(e.shiftKey ? 1 : -1); }
+  else if (k === 'y'){ e.preventDefault(); histGo(1); }
+});
+setTimeout(histPush, 1500);
+/* ---- collapsible panel sections (remembered in this browser) ---- */
+{
+  const groups = [...document.querySelectorAll('aside .group')].filter(g => g.querySelector(':scope > h2'));
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem('fb-collapsed') || '{}'); } catch (e){}
+  groups.forEach(g => {
+    const h = g.querySelector(':scope > h2'), key = h.firstChild.textContent.trim();
+    if (saved[key]) g.classList.add('collapsed');
+    h.setAttribute('role', 'button'); h.tabIndex = 0; h.title = 'Show or hide this section';
+    const flip = () => { g.classList.toggle('collapsed'); saved[key] = g.classList.contains('collapsed'); try { localStorage.setItem('fb-collapsed', JSON.stringify(saved)); } catch (e){} };
+    h.addEventListener('click', e => { if (e.target.closest('button, input, select, a')) return; flip(); });
+    h.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); flip(); } });
+  });
+}
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
@@ -5398,6 +5919,8 @@ function syncAllUI(){
   if (state.mix && state.mix.rwash && state.mix.rring === undefined) state.mix.rring = state.mix.rwash;
   state.mix = { ...MIX_DEF, ...(state.mix || {}) }; delete state.mix.rwash; delete state.mix.rrays; delete state.mix.rspill; buildMix(); syncMaster(); syncWash();
   ['grating', 'prism', 'free'].forEach(k => { state[k] = { ...JSON.parse(STATE_DEFAULTS)[k], ...(state[k] || {}) }; }); state.coating = state.coating || 'lens'; syncTricks();
+  if ($('#layerSel')) $('#layerSel').value = state.layer || 'beauty';
+  state.ghostOv = state.ghostOv || {}; if (typeof syncGhostOvInfo === 'function') syncGhostOvInfo();
   $('#showHandles').checked = state.handles;
   const li = $('#lensList').querySelector(`input[value="${state.lens}"]`); if (li) li.checked = true;
   onLensChange(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); updateOSD();
@@ -5472,6 +5995,7 @@ function loop(now){
       frameMs = frameMs*0.9 + (performance.now() - r0)*0.1; lastTf = tf;
       lastFlick.set(flickData);
       placeHandles();
+      if (n % 4 === 0) drawXray();
     }
   }
   if (drag) placeHandles();
@@ -5479,6 +6003,12 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+document.querySelectorAll('aside input[type=range]').forEach(el => { if (el.dataset.def === undefined && el.id !== 'focal') el.dataset.def = el.value; });
+document.addEventListener('dblclick', e => {
+  const el = e.target;
+  if (!(el instanceof HTMLInputElement) || el.type !== 'range' || el.dataset.def === undefined || el.disabled) return;
+  el.value = el.dataset.def; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+});
 window.__flare = { state, render };
 })();
 </script>

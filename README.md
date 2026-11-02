@@ -32,6 +32,12 @@ realistic by default, quick to direct, and driven by real shot data rather than 
   free-lensing (the optical axis tilted off the frame centre, with a light leak). Light grazing the barrel baffles and
   the front element's bevel is simulated as non-sequential stray light. **Rainbow arcs** in the mixer stays as an
   art-directed element for huge soft rainbow rings.
+- **Review tools.** Layer views as the Nuke node would output them (Beauty, Flare only, Ghosts, Star + streak, Glare;
+  keys `1`–`5`), solo and mute on every light and mixer element, **A/B** look slots (`X` swaps), undo/redo
+  (`Ctrl/Cmd+Z`), double-click any slider to reset it, collapsible panel sections with the flare amount pinned.
+- **Fix one ghost.** **Pick a ghost**, click it in the frame: the tool names the two surfaces it bounces between and
+  gives that optical path its own gain, tint, nudge and solo. **Lens X-ray** draws the lens in cross-section with live
+  rays from the selected light and the picked ghost's bounce.
 - **Before/after wipe**, a **present mode** (press `P`), **Reset all**, and **Share a look**, which saves every setting
   to one file.
 
@@ -52,11 +58,18 @@ The idea is that a lighter's only step is to tag a light, and everything else fo
    holds tagged lights out of the screen flares so nothing flares twice, and outputs the flare as its own layers. The
    compositor only adjusts taste: overall amount, per-light gain, the element mix.
 
+## Houdini exporter
+
+`houdini/flare_bench_export.py` is a starting-point exporter (untested in production). It reads a Solaris/USD stage
+(lights tagged with `flare:enable`, `flare:type`, `flare:gain`, `flare:kelvin` attributes; distances in metres from the
+stage's `metersPerUnit`) or old-style /obj lights, and either writes a JSON file (drop it on the Flare Bench frame) or
+writes each frame's camera and tagged lights into the rendered EXR's header as a `flare/shot` attribute. Utility EXRs
+carrying that attribute bring their lights in when dropped on the frame.
+
 ## In progress
 
-The page also has screen flares from HDR/EXR plates and a camera-and-lights import from 3D, but both are switched off in
-the panel for now (`FEATURE_PLATES` in `index.html`). `houdini/flare_bench_export.py` is a starting-point exporter
-for that import.
+The page also has screen flares from HDR/EXR plates, switched off in the panel for now (`FEATURE_PLATES` in
+`index.html`).
 
 ## Background
 
