@@ -322,7 +322,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
       <div class="field" id="qualField"><span>Ray density</span><select id="quality" aria-label="Ray density"><option value="32">Draft · 48 ghost paths · 32×32 rays</option><option value="48">Standard · 64 paths · 48×48 rays · refines ×3</option><option value="64" selected>High · 96 paths · 64×64 rays · refines ×6</option><option value="80">Ultra · 128 paths · 80×80 rays · refines ×8</option><option value="128">Extreme · 128 paths · 128×128 rays · refines ×12</option></select></div>
       <h3 class="sub-h">Elements</h3>
       <div id="mixRows"></div>
-      <div class="row mix" title="How big the rainbow wash blooms are"><label for="washSize">Wash size</label><input type="range" id="washSize" min="0.4" max="2.5" step="0.05" value="1"><output id="washSizeOut" for="washSize">1.00×</output></div>
+      <div class="row mix" title="How big the rainbow arcs, rays and spill are"><label for="washSize">Rainbow size</label><input type="range" id="washSize" min="0.4" max="2.5" step="0.05" value="1"><output id="washSizeOut" for="washSize">1.00×</output></div>
       <div class="add"><button type="button" class="btn" id="mixReset">Reset elements</button></div>
     </section>
 
@@ -364,7 +364,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Ghosts and their cut edges</dt><dd>Ghosts are images of the lens opening, lined up through the frame centre opposite the light. Near the frame edge the glass rims clip them into crescents and cat's eyes, which change as the camera moves; stopping down shrinks the clipping.</dd>
         <dt>Flare lights on set</dt><dd>Cinematographers often make the flare on purpose with a light just out of shot aimed at the lens: a xenon torch panned on and off the lens (the Star Trek method), a small spot trimmed in from the frame edge, a mirror bouncing the sun. The three off-frame lights in the picker land where a crew would put them, just past the frame edge, so the light itself stays out of shot while its flare pours in.</dd>
         <dt>Starburst, streak, dirt</dt><dd>The starburst is diffraction off the iris blades. The anamorphic streak comes from reflections inside the cylindrical front group. Dust on the front glass shows as soft iris-shaped blobs; wipe marks and fingerprints throw streaky fans. The glass starts clean, the way a camera crew keeps it, and Lens &amp; camera details can dirty it.</dd>
-        <dt>Big soft rainbow flares</dt><dd>The large, soft, rainbow-rimmed blooms in many films come from a few places: a flat filter in front of the lens (UV, ND, IRND, diffusion), whose reflections between filter and front element make a huge defocused ghost; single-coated or vintage glass, whose ghosts are big and strongly coloured; and the coloured residual of the coatings, spread into a spectrum by the glass's dispersion. A clean modern prime hardly makes them. <b>Rainbow wash</b> in the Elements mixer adds them as an art-directed element, sized with <b>Wash size</b>, in any flare model, so a shot can have them even on clean glass.</dd>
+        <dt>Big soft rainbow flares</dt><dd>The huge rainbow arcs, streaky rainbow fans and washes of spectrum in many films come from things in front of the lens rather than the lens itself: a flat filter whose reflection off the front element makes a giant ring, a prism, crystal or piece of glass held at the edge of frame, or a finely scratched or textured filter that spreads every ray of light into its spectrum. A clean prime never makes them, so they are art-directed elements in the mixer, drawn in every flare model and driven by each light's position and brightness: <b>Rainbow arcs</b> (huge soft spectral rings, mostly seen as arcs), <b>Rainbow rays</b> (fans of fine streaks radiating from the light, banded in colour by distance) and <b>Prism spill</b> (a broad soft rainbow laid across the frame on the far side of the light). <b>Rainbow size</b> scales all three.</dd>
         <dt>Flicker</dt><dd>Sodium streetlights and bulbs on mains power pulse at twice the mains frequency, and LED headlights at their PWM rate; off-speed frame rates and shutters make them beat, and the rolling shutter turns that into bands.</dd>
         <dt>Using it in comp</dt><dd>The flare is meant to go over a render, where the light itself already exists. Turn off <b>Sources</b> under the frame to see the flare alone: the ghosts, star, streak and the glow the lens adds around the light, without the sun's disc or the bulb. <b>Handles</b> hides the light markers for a clean view, and Present (<kbd>P</kbd>) hides the panel.</dd>
       </dl>
@@ -404,7 +404,7 @@ kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border
         <dt>Independent of screen size</dt><dd>Every size is worked out in fractions of the frame from the optics (the sun's angle, a ghost's magnification, the spread of the glare), not in screen pixels, so a small viewport shows the same flare as a 4K frame, with less detail. The only pixel limits are where nothing can be smaller than a pixel: star spikes are at least one pixel wide (with their light kept the same, so they get dimmer, not brighter) and the softening of a ghost is at least a few pixels.</dd>
         <dt>Converging like a path tracer</dt><dd>While the shot holds still, each new frame traces a fresh, rotated set of rays, source samples and wavelengths and averages it in. This is Monte Carlo accumulation, so a locked-off frame keeps refining toward a smooth result.</dd>
         <dt>Linear light throughout</dt><dd>Everything is computed in scene-referred linear light, in 16-bit floating-point buffers. The flare is added to the image the way a lens adds it, before the camera's response curve. Flare gain scales what the lens does with a light, not the light itself, as in Animal Logic's flare pass.</dd>
-        <dt>What is tuned rather than derived</dt><dd>Some parts are modelled by hand: the Artistic flare model, the extra rainbow rings and the rainbow wash, dust and smears on the front glass, light leaks, and the relative strength of glare and streak for each lens family. Those were matched by eye against real footage shot on the lenses each family is named after. In the Ray-traced model, the ghosts themselves come only from the optics.</dd>
+        <dt>What is tuned rather than derived</dt><dd>Some parts are modelled by hand: the Artistic flare model, the extra rainbow rings, the rainbow arcs, rays and prism spill, dust and smears on the front glass, light leaks, and the relative strength of glare and streak for each lens family. Those were matched by eye against real footage shot on the lenses each family is named after. In the Ray-traced model, the ghosts themselves come only from the optics.</dd>
         <dt>Further reading</dt><dd>Hullin, Eisemann, Seidel and Lee, <i>Physically-Based Real-Time Lens Flare Rendering</i>, SIGGRAPH 2011. Ritschel, Ihrke, Frisvad, Coppens, Myszkowski and Seidel, <i>Temporal Glare</i>, Eurographics 2009. Animal Logic, <i>Physical Based Lens Flare Rendering in The LEGO Movie 2</i>, DigiPro 2019. Shirley and Chiu, <i>A Low Distortion Map Between Disk and Square</i>, 1997. Wyman, Sloan and Shirley, <i>Simple Analytic Approximations to the CIE XYZ Color Matching Functions</i>, 2013.</dd>
       </dl>
     </details>
@@ -1661,7 +1661,7 @@ void main(){
 const FS_VEIL = `#version 300 es
 precision highp float; precision highp int;
 in vec2 vUV; out vec4 o;
-uniform int uN; uniform vec2 uLp[4]; uniform vec3 uLf[4]; uniform vec3 uLe[4];
+uniform int uN; uniform vec2 uLp[4]; uniform vec3 uLf[4]; uniform vec3 uLe[4]; uniform vec3 uRb; uniform float uRbSize;
 uniform vec4 uGsp[4]; uniform float uVeil, uDirtAmt, uA, uDirtR, uSmear, uSmearAng, uSmMode, uEdge, uScratch, uPhys, uScat, uR0, uScatR, uScatNorm, uKE, uTail, uTailRc, uTailNorm, uBarrel, uLeak, uTime, uStopK, uLeakMode, uLeakWarm;
 uniform vec3 uVeilTint, uEdgeTint, uBarrelTint; uniform vec3 uLc[4]; uniform sampler2D uDirt, uVis;
 ${NOISE}${FLICK}${SHAPE}
@@ -1691,6 +1691,55 @@ vec3 smearPSF(vec2 d, vec2 Lp){
     float I = 1.6*prof*pow(0.02/(abs(along) + 0.02), 1.1)*exp(-abs(along)/len)*fibre*side*(0.25 + 0.75*h2);
     vec3 c = uSmMode > 2.5 ? 0.7 + 0.3*cos(6.2831853*(h2*1.7 + abs(along)*2.0 + vec3(0.0, 0.33, 0.67))) : vec3(1.0, 0.97, 0.93);
     acc += c*I;
+  }
+  return acc;
+}
+/* Art-directed rainbow flares, the kind filters, prisms, crystals and single-coated glass throw in front of the lens:
+   - rings: huge soft spectral rings (often two), centred between the light and the frame centre and mostly seen as
+     arcs, from a flat filter's reflection or a strongly dispersive ghost
+   - rays: fibrous fans of spectral streaks radiating from the light, coloured in bands by distance (a prism, a crystal
+     or a finely scratched filter edge spreading each ray into its spectrum)
+   - spill: a broad, soft rainbow gradient laid across part of the frame, like a prism held at the lens
+   Colours run red to violet; each element drifts with the light and shifts as it moves. */
+vec3 rbSpec(float h){   // h: 0 red ... 1 violet
+  vec3 c = clamp(abs(fract(h*0.78 + vec3(1.0, 2.0/3.0, 1.0/3.0))*6.0 - 3.0) - 1.0, 0.0, 1.0);
+  return c/(dot(c, vec3(0.2126, 0.7152, 0.0722)) + 0.25);
+}
+vec3 rainbowFX(vec2 p, vec2 Lp, float sd){
+  vec3 acc = vec3(0.0);
+  float S = uRbSize, Lr = length(Lp/vec2(uA, 1.0));
+  if (uRb.x > 0.0){
+    for (int k = 0; k < 2; k++){
+      float fk = float(k);
+      vec2 c = Lp*(k == 0 ? 0.32 : 0.12) + vec2(0.07, -0.05)*fk;
+      float Rr = S*(k == 0 ? 0.62 + 0.25*Lr : 0.4 + 0.18*Lr), w = Rr*(k == 0 ? 0.075 : 0.06);
+      vec2 q = p - c; float r = length(q), ang = atan(q.y, q.x);
+      float dd = (r - Rr)/(w*1.3);
+      if (abs(dd) > 3.5) continue;
+      float arc = smoothstep(0.25, 0.85, vn2(vec2(ang*1.1 + sd*3.1 + fk*5.0 + Lp.x*0.6, sd + fk)));
+      float env = exp(-dd*dd*0.55)*(0.12 + 0.88*arc)*(k == 0 ? 1.0 : 0.6);
+      acc += rbSpec(clamp(0.5 - dd*0.3, 0.0, 1.0))*env*uRb.x/max(Rr, 0.2);
+    }
+  }
+  vec2 d = p - Lp; float r = length(d), a = atan(d.y, d.x);
+  if (uRb.y > 0.0 && r > 0.02){
+    // fans of fine streaks: fibres are narrow in angle and long in radius, gathered into a few lobes, favouring the
+    // side toward the frame centre; colour bands repeat with distance from the light
+    float toC = Lr > 1e-3 ? dot(d/r, -Lp/max(length(Lp), 1e-4)) : 0.5;
+    float lobe = pow(vn2(vec2(a*1.2 + sd*4.7, sd*2.0)), 3.0)*3.2*(0.3 + 0.7*smoothstep(-0.4, 0.8, toC));
+    float f1 = vn2(vec2(a*42.0 + sd*13.0, r*1.4)), f2 = vn2(vec2(a*15.0 + sd*7.0, r*0.6 + 3.0));
+    float fib = pow(f1*0.6 + f2*0.6, 2.5)*2.0;
+    float win = smoothstep(0.08*S, 0.42*S, r)*exp(-r/(0.9*S));
+    float h = fract(r/(0.42*S) + 0.15 + 0.12*vn2(vec2(a*5.0, sd)));
+    acc += rbSpec(h)*lobe*fib*win*uRb.y/(r + 0.25);
+  }
+  if (uRb.z > 0.0){
+    // a prism's spill: an elongated soft patch of spectrum across the ghost axis, on the far side of the light
+    vec2 ax = Lr > 1e-3 ? -Lp/max(length(Lp), 1e-4) : vec2(1.0, 0.0), pr = vec2(-ax.y, ax.x);
+    vec2 c = Lp + ax*(0.55 + 0.35*Lr)*S + pr*0.15*S*(vn2(vec2(sd, 1.0)) - 0.5);
+    vec2 q = p - c; float u = dot(q, ax)/(0.42*S), v = dot(q, pr)/(0.75*S);
+    float env = exp(-(u*u + v*v)*1.1);
+    acc += rbSpec(clamp(0.5 + v*0.5, 0.0, 1.0))*env*uRb.z;
   }
   return acc;
 }
@@ -1816,6 +1865,7 @@ void main(){
     acc += uLf[i]*vis*(veil*uVeilTint + dl);
     if (uSmMode > 0.5 && uSmear > 0.0) acc += uLf[i]*vis*uSmear*smearPSF(d, uLp[i]);
     if (uBarrel > 0.0) acc += uLf[i]*vis*uBarrel*barrelArc(p, uLp[i])*uBarrelTint;
+    if (uRb.x + uRb.y + uRb.z > 0.0) acc += uLf[i]*vis*rainbowFX(p, uLp[i], float(i)*1.37 + 0.41);
     if (uLeakMode > 0.5 && uLeakMode < 2.5) acc += gapLeak(p, uLp[i], uLc[i]*vis, uTime, float(i)*7.3 + 1.0)*uLeak;
     vec2 Lp = uLp[i];
     float ex = abs(Lp.x) - uA, ey = abs(Lp.y) - 1.0;
@@ -2705,7 +2755,7 @@ const state = {
   screen: { on: true, thr: 3, amount: 1, ghosts: 1, hold: true },
   comps: { ghosts: true, star: true, streak: true, veil: true, dirt: true, bloom: true, barrel: true, sensor: false },
   master: 0.2,
-  mix: { ghostsS: 1, ghostsL: 1, rainbow: 0, rwash: 0, star: 1, streak: 1, glare: 1, dirt: 1, barrel: 1, bloom: 1, sensor: 0 },
+  mix: { ghostsS: 1, ghostsL: 1, rainbow: 0, rring: 0, rrays: 0, rspill: 0, star: 1, streak: 1, glare: 1, dirt: 1, barrel: 1, bloom: 1, sensor: 0 },
   handles: true, lights: [], sel: 0
 };
 const STATE_DEFAULTS = JSON.stringify(state, (k, v) => v === Infinity ? 'Infinity' : v);   // for Reset all
@@ -2799,12 +2849,6 @@ function buildGhosts(){
   [{ k: 1.0, r: 0.5, i: 0.6, type: 5, chroma: 0.11, soft: 0.05, seed: 2007 },   // k = 1: centred on the light itself
    { k: -0.62, r: 0.58, i: 0.9, type: 5, chroma: 0.09, soft: 0.04, clip: 0.5, angC: 1.0, angW: 1.6, seed: 3013 },
    { k: -1.25, r: 0.2, i: 0.35, type: 5, chroma: 0.14, soft: 0.04, clip: 0.2, angC: 0.9, angW: 1.4, seed: 4021 }].forEach(e => out.push(G(e)));
-  // rainbow wash, added with the Rainbow wash control: a few big soft spectral discs along the ghost axis, the large
-  // rainbow-rimmed blooms of filters and single-coated glass that many films lean on. Art-directed, not traced.
-  [{ k: -0.3, r: 0.42, i: 1.0, chroma: 0.25, soft: 0.35, seed: 5011, tint: [1, 0.95, 1] },
-   { k: -0.85, r: 0.75, i: 1.6, chroma: 0.35, soft: 0.45, seed: 5023, tint: [0.95, 1, 1] },
-   { k: 0.45, r: 0.28, i: 0.5, chroma: 0.2, soft: 0.3, seed: 5039, tint: [1, 1, 0.95] }]
-    .forEach(e => out.push(G({ ...e, type: 6, angC: 1, angW: 99, poly: 0 })));
   if (state.filter === 'clear') out.push(G({ k:-1, r:1.15, i:0.9/L.ghostGain, type:4, chroma:0.006, soft:0.12, poly:0, angC:1, angW:99 }));
   ghostList = out;
   gl.bindBuffer(gl.ARRAY_BUFFER, ghostBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(out.flat()), gl.STATIC_DRAW);
@@ -3405,7 +3449,7 @@ function render(t){
     gl.uniform1i(gsc.u.uG, 2); gl.uniform1f(gsc.u.uSc, L.gscat); gl.uniform1f(gsc.u.uScale, MS/Math.max(1, accum.n));
     full();
   }
-  if (ghostCount && ((!traced && state.comps.ghosts) || state.comps.rainbow || MX.rwash > 0)){
+  if (ghostCount && ((!traced && state.comps.ghosts) || state.comps.rainbow)){
     const g = P.ghost; gl.useProgram(g.p); gl.bindVertexArray(vaoGhost);
     bindTex(0, visRT.t); bindTex(1, dirtTex);
     gl.uniform1i(g.u.uVis, 0); gl.uniform1i(g.u.uDirt, 1); gl.uniform1i(g.u.uFlick, FLICK_UNIT);
@@ -3496,12 +3540,15 @@ function render(t){
       full();
     });
   }
-  if (state.comps.veil || state.comps.dirt || state.comps.barrel || state.leak !== 'off'){
+  const rbOn = (MX.rring || 0) + (MX.rrays || 0) + (MX.rspill || 0) > 0;
+  if (state.comps.veil || state.comps.dirt || state.comps.barrel || state.leak !== 'off' || rbOn){
     const v = P.veil; gl.useProgram(v.p);
     gl.uniform3fv(v.u.uLe, arrLe); gl.uniform1f(v.u.uTime, t);
     gl.uniform1f(v.u.uSmMode, { none: 0, wipe: 1, circular: 2, print: 3 }[state.smear]);
     gl.uniform1f(v.u.uBarrel, state.comps.barrel ? L.barrel*0.55*MS*MX.barrel : 0); gl.uniform3f(v.u.uBarrelTint, ...L.barrelTint);
     gl.uniform1f(v.u.uStopK, 1 - 0.45*clamp(stops/4, 0, 1));
+    { const K = window.__rbK || [3, 3, 4];
+      gl.uniform3f(v.u.uRb, (MX.rring || 0)*K[0]*MS, (MX.rrays || 0)*K[1]*MS, (MX.rspill || 0)*K[2]*MS); gl.uniform1f(v.u.uRbSize, state.washSize ?? 1); }
     gl.uniform1f(v.u.uLeakMode, { off: 0, gap: 1, gapStrong: 2, door: 3 }[state.leak]);
     gl.uniform1f(v.u.uLeak, { off: 0, gap: 0.22, gapStrong: 0.8, door: 0.16 }[state.leak]);
     gl.uniform1f(v.u.uLeakWarm, C.film ? 0.65 : 0.35);
@@ -4959,11 +5006,11 @@ const masterFromSlider = v => 0.05*Math.pow(40, v/100), sliderFromMaster = m => 
 const masterLabel = m => m < 0.15 ? 'Faint' : m < 0.5 ? 'Subtle' : m < 1.0 ? 'Visible' : m < 1.6 ? 'Strong' : 'Heavy';
 function syncMaster(){ $('#master').value = sliderFromMaster(state.master); $('#masterOut').textContent = masterLabel(state.master); }
 $('#master').addEventListener('input', e => { state.master = masterFromSlider(+e.target.value); $('#masterOut').textContent = masterLabel(state.master); });
-const MIX = [['ghostsS', 'Small ghosts', 'Dots and small discs'], ['ghostsL', 'Large ghosts', 'Big rings and soft washes'], ['rainbow', 'Rainbow rings', 'Dispersed rainbow halo and arcs'], ['rwash', 'Rainbow wash', 'Big soft rainbow-rimmed blooms (art-directed)'],
+const MIX = [['ghostsS', 'Small ghosts', 'Dots and small discs'], ['ghostsL', 'Large ghosts', 'Big rings and soft washes'], ['rainbow', 'Rainbow rings', 'Dispersed rainbow halo and arcs'], ['rring', 'Rainbow arcs', 'Huge soft rainbow rings and arcs (filter / prism look)'], ['rrays', 'Rainbow rays', 'Fans of fine rainbow streaks from the light (prism / crystal look)'], ['rspill', 'Prism spill', 'A broad soft rainbow laid across the frame (prism held at the lens)'],
   ['star', 'Starburst', 'Iris star and the glow at the light'], ['streak', 'Streak', 'Anamorphic streak'], ['glare', 'Glare & veil', 'Haze of light over the frame'],
   ['dirt', 'Dirt & smears', 'Dust and wipe marks on the front glass'], ['barrel', 'Barrel reflections', 'Crescents from lights just off frame'], ['bloom', 'Bloom', 'Highlights bleeding'],
   ['sensor', 'Sensor dots', 'Red dot grid on digital bodies']];
-const MIX_DEF = { ghostsS: 1, ghostsL: 1, rainbow: 0, rwash: 0, star: 1, streak: 1, glare: 1, dirt: 1, barrel: 1, bloom: 1, sensor: 0 };
+const MIX_DEF = { ghostsS: 1, ghostsL: 1, rainbow: 0, rring: 0, rrays: 0, rspill: 0, star: 1, streak: 1, glare: 1, dirt: 1, barrel: 1, bloom: 1, sensor: 0 };
 const mixOut = v => v < 0.01 ? 'Off' : '×' + v.toFixed(v < 1 ? 2 : 1);
 function buildMix(){
   $('#mixRows').innerHTML = MIX.map(([k, n, tip]) => `<div class="row mix" title="${tip}"><label for="mx_${k}">${n}</label><input type="range" id="mx_${k}" data-k="${k}" min="0" max="2" step="0.05" value="${state.mix[k] ?? MIX_DEF[k]}"><output>${mixOut(state.mix[k] ?? MIX_DEF[k])}</output></div>`).join('');
@@ -4981,7 +5028,7 @@ allocTrace();
 layout(); buildGhosts(); syncIris(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); syncModeUI();
 
 /* ---------- share a look: everything needed to recreate this exact frame, in one file ---------- */
-const APP_VERSION = 50;
+const APP_VERSION = 52;
 let lastTf = 0, frameMs = 0, dlCap = null;
 try { window.claude?.use?.('downloads')?.then(d => { dlCap = d; }).catch(() => {}); } catch (e){}
 function gpuName(){ try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e){ return 'unknown'; } }
@@ -5032,7 +5079,8 @@ function syncAllUI(){
   $('#matte').checked = !!state.matte; $('#ev').value = state.ev; $('#evOut').textContent = fmtEV(state.ev);
   $('#dirt').value = state.dirt; $('#dirtOut').textContent = dirtLabel(state.dirt);
   setFocus(state.focus); $('#autoFocus').checked = !!state.autoFocus;
-  state.mix = { ...MIX_DEF, ...(state.mix || {}) }; buildMix(); syncMaster(); syncWash();
+  if (state.mix && state.mix.rwash && state.mix.rring === undefined) state.mix.rring = state.mix.rwash;
+  state.mix = { ...MIX_DEF, ...(state.mix || {}) }; delete state.mix.rwash; buildMix(); syncMaster(); syncWash();
   $('#showHandles').checked = state.handles;
   const li = $('#lensList').querySelector(`input[value="${state.lens}"]`); if (li) li.checked = true;
   onLensChange(); syncHandles(); renderLightPanel(); applyHandles(); syncSceneControls(); syncShotUI(); syncFocal(); syncScreen(); syncWipe(); updateOSD();
