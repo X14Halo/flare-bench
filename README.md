@@ -28,8 +28,7 @@ realistic by default, quick to direct, and driven by real shot data rather than 
   **Handles** to hide the light markers. **+ Add light** (or `A`) opens the light picker; `Delete` removes a light.
 - **Lens tricks, simulated.** What cinematographers do to a lens to make it flare more, each from the physics:
   re-coat the lens single-coated or uncoated (thin-film reflectance on every surface), diffraction grating filters
-  (sin θ = mλ/d, orders 1–3: lines, cross, 6- and 8-ray stars, circular rainbow rings), a prism held at the lens
-  (the whole view traced back through real catalogue glass per wavelength, with a soft out-of-focus edge), and
+  (sin θ = mλ/d, orders 1–3: lines, cross, 6- and 8-ray stars, acting on everything bright in the frame), and
   free-lensing (the optical axis tilted off the frame centre, with a light leak). Light grazing the barrel baffles and
   the front element's bevel is simulated as non-sequential stray light. **Rainbow arcs** in the mixer stays as an
   art-directed element for huge soft rainbow rings.
